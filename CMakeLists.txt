@@ -5,6 +5,10 @@ project(tyche
   DESCRIPTION "A Lua/Go-like programing language"
   LANGUAGES C CXX ASM)
 
+#
+# project options / configuration
+#
+
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 23 CACHE STRING "C++ Standard")
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -42,22 +46,31 @@ endif()
 # libraries
 #
 
-#
-# executable
-#
-
-set(TYCHE_VM
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  # Specify the commit you depend on and update it regularly.
+  URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
 )
-
-add_executable(${PROJECT_NAME}
-	main.cc
-	${TYCHE_VM})
+FetchContent_MakeAvailable(googletest)
 
 #
-# compilation options
+# library
 #
 
-target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE ${warnings})
+add_library(lib${PROJECT_NAME} STATIC
+	lib/vm.hh
+	lib/vm.cc)
+
+target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
+
+#
+# tests
+#
+
+add_executable(${PROJECT_NAME}-test tests.cc)
+target_link_libraries(${PROJECT_NAME}-test lib${PROJECT_NAME} gtest_main)
+add_test(NAME tyche_test COMMAND ${PROJECT_NAME}-test)
 
 #
 # check for leaks
@@ -76,5 +89,4 @@ add_custom_command(TARGET leaks
 # installation
 #
 
-install(TARGETS ${CMAKE_PROJECT_NAME}
-    RUNTIME DESTINATION bin)
+install(TARGETS lib${CMAKE_PROJECT_NAME} RUNTIME DESTINATION lib)
