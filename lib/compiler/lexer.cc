@@ -26,9 +26,16 @@ next_token:
         // Integer
 
         if (isdigit(source.at(i))) {
-            while (i < source.size() && isdigit(source.at(i)))
+            bool is_float = false;
+            while (i < source.size() && (isdigit(source.at(i)) || source.at(i) == '.')) {
+                if (source.at(i) == '.')
+                    is_float = true;
                 ++i;
-            tokens.emplace_back(Integer(std::atoi(source.substr(start, i - start).c_str())), line, column);
+            }
+            if (is_float)
+                tokens.emplace_back(Float(std::atof(source.substr(start, i - start).c_str())), line, column);
+            else
+                tokens.emplace_back(Integer(std::atoi(source.substr(start, i - start).c_str())), line, column);
             column += i;
             --i;
         }
@@ -95,6 +102,12 @@ next_token:
         } else if (source.at(i) == '\n') {
             ++line;
             column = 1;
+        }
+
+        // other invalid character
+
+        else {
+            throw CompilationError(std::string("Invalid character '") + source.at(i) + "'.", line, column);
         }
 
     }

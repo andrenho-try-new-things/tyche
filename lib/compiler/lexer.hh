@@ -30,6 +30,19 @@ struct Integer {
     }
 };
 
+struct Float {
+    float value;
+
+    explicit Float(float value_) : value(value_) {}
+    bool operator==(Float const& other) const {
+        return std::abs(value - other.value) <= 1e-6f * std::max(std::abs(value), std::abs(other.value));
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Float& t) {
+        return os << "Float { " << t.value << " }";
+    }
+};
+
 struct Identifier {
     std::string identifier;
 
@@ -61,7 +74,7 @@ struct EOF_ {
 };
 
 struct Token {
-    std::variant<Symbol, Integer, Identifier, String, EOF_> token;
+    std::variant<Symbol, Integer, Float, Identifier, String, EOF_> token;
     size_t line;
     size_t column;
 

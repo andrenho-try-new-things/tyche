@@ -13,6 +13,9 @@ public:
     CompilationError(const char* description, size_t line_, size_t column_)
         : std::runtime_error(description), line(line_), column(column_) {}
 
+    CompilationError(std::string const& description, size_t line_, size_t column_)
+        : CompilationError(description.c_str(), line_, column_) {}
+
     const size_t line;
     const size_t column;
 };
