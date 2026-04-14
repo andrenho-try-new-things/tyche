@@ -3,7 +3,7 @@
 
 static const std::string COMBINED_SYMBOLS_L2[] = { "@=" };
 static const std::string SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
-static const std::string IGNORE = "\n \t";
+static const std::string IGNORED = " \t";
 
 namespace compiler {
 
@@ -15,6 +15,7 @@ std::vector<Token> tokenize(std::string const& source)
     size_t column = 1;
 
     for (size_t i = 0; i < source.size(); ++i) {
+next_token:
         size_t start = i;
 
         if (isdigit(source.at(i))) {
@@ -26,7 +27,22 @@ std::vector<Token> tokenize(std::string const& source)
         }
 
         else if (SYMBOLS.contains(source.at(i))) {
+            if (source.length() >= i + 1) {
+                std::string next_2 = source.substr(i, 2);
+                for (auto const& combined: COMBINED_SYMBOLS_L2) {
+                    if (combined == next_2) {
+                        tokens.emplace_back(Symbol(combined), line, column);
+                        column += 2;
+                        i += 2;
+                        goto next_token;
+                    }
+                }
+            }
             tokens.emplace_back(Symbol(std::string(1, source.at(i))), line, column);
+            ++column;
+        }
+
+        else if (IGNORED.contains(source.at(i))) {
             ++column;
         }
 
@@ -34,6 +50,7 @@ std::vector<Token> tokenize(std::string const& source)
             ++line;
             column = 1;
         }
+
     }
 
     tokens.emplace_back(EOF_(), line, column);
