@@ -68,7 +68,8 @@ target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
 # tests
 #
 
-add_executable(${PROJECT_NAME}-test tests.cc)
+add_executable(${PROJECT_NAME}-test tests.cc
+        lib/compiler/exceptions.hh)
 target_link_libraries(${PROJECT_NAME}-test lib${PROJECT_NAME} gtest_main)
 add_test(NAME tyche_test COMMAND ${PROJECT_NAME}-test)
 

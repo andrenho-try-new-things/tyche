@@ -5,9 +5,9 @@ TEST(Lexer, Lexer)
 {
     using namespace compiler;
     using V = std::vector<Token>;
-#define CHECK(a, b) ASSERT_EQ(tokenize(a), (V{ b }));
+#define CHECK(a, b) ASSERT_EQ(tokenize(a), b);
 
-    CHECK("42", { Integer(42) });
+    CHECK("42", (V{ Integer(42), EOF_() }))
 
 #undef CHECK
 }
