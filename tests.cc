@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
+
 #include "lib/compiler/lexer.hh"
+#include "lib/compiler/parser.hh"
+#include "lib/compiler/ir.hh"
 
 TEST(Lexer, Lexer)
 {
@@ -19,6 +22,14 @@ TEST(Lexer, Lexer)
     ASSERT_EQ(t(R"("a\"b")"), (V{ T(String("a\"b")), T(EOF_()) }));
     ASSERT_EQ(t(R"("a\\b")"), (V{ T(String("a\\b")), T(EOF_()) }));
     ASSERT_EQ(t(R"("a\gb")"), (V{ T(String("a\\gb")), T(EOF_()) }));
+}
+
+TEST(Parser, Parser)
+{
+    using namespace compiler;
+    auto CHECK = [](std::string const& code, IR const& expected) {
+        ASSERT_EQ(parse(tokenize(code)), expected);
+    };
 }
 
 int main(int argc, char** argv)

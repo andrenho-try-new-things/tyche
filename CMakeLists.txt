@@ -59,8 +59,12 @@ FetchContent_MakeAvailable(googletest)
 #
 
 add_library(lib${PROJECT_NAME} STATIC
+        lib/compiler/exceptions.hh
         lib/compiler/lexer.cc
-        lib/compiler/lexer.hh)
+        lib/compiler/lexer.hh
+        lib/compiler/parser.cc
+        lib/compiler/parser.hh
+        lib/compiler/ir.hh)
 
 target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
 
@@ -68,8 +72,7 @@ target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
 # tests
 #
 
-add_executable(${PROJECT_NAME}-test tests.cc
-        lib/compiler/exceptions.hh)
+add_executable(${PROJECT_NAME}-test tests.cc)
 target_link_libraries(${PROJECT_NAME}-test lib${PROJECT_NAME} gtest_main)
 add_test(NAME tyche_test COMMAND ${PROJECT_NAME}-test)
 
