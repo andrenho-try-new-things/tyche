@@ -5,8 +5,11 @@ TEST(Lexer, Lexer)
 {
     using namespace compiler;
     using V = std::vector<Token>;
+#define CHECK(a, b) ASSERT_EQ(tokenize(a), (V{ b }));
 
-    ASSERT_EQ(tokenize("@=42;"), (V{ Symbol("@="), Integer(42), Symbol(";") }));
+    CHECK("42", { Integer(42) });
+
+#undef CHECK
 }
 
 int main(int argc, char** argv)

@@ -2,7 +2,7 @@
 
 namespace compiler {
 
-std::vector<Token> tokenize(const std::string& source)
+std::vector<Token> tokenize(std::string const& source)
 {
     return {};
 }
