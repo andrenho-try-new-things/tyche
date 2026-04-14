@@ -41,6 +41,17 @@ struct Identifier {
     }
 };
 
+struct String {
+    std::string str;
+
+    explicit String(std::string const& str_) : str(str_) {}
+    bool operator==(String const& other) const { return str == other.str; }
+
+    friend std::ostream& operator<<(std::ostream& os, const String& t) {
+        return os << "String { " << t.str << " }";
+    }
+};
+
 struct EOF_ {
     bool operator==(EOF_ const&) const { return true; }
 
@@ -50,7 +61,7 @@ struct EOF_ {
 };
 
 struct Token {
-    std::variant<Symbol, Integer, Identifier, EOF_> token;
+    std::variant<Symbol, Integer, Identifier, String, EOF_> token;
     size_t line;
     size_t column;
 

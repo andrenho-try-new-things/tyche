@@ -2,7 +2,7 @@
 #include "exceptions.hh"
 
 static const std::string COMBINED_SYMBOLS_L2[] = { "@=" };
-static const std::string SYMBOLS = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
+static const std::string SYMBOLS = "!#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 static const std::string IGNORED = " \t";
 
 namespace compiler {
@@ -49,6 +49,33 @@ next_token:
             }
             tokens.emplace_back(Symbol(std::string(1, source.at(i))), line, column);
             ++column;
+        }
+
+        // String
+
+        else if (source.at(i) == '"') {
+            ++i;
+            std::string str;
+            while (i < source.size() && source.at(i) != '"') {
+                if (source.at(i) == '\\') {
+                    if (source.at(i+1) == 'n')
+                        str += "\n";
+                    else if (source.at(i+1) == '\\')
+                        str += "\\";
+                    else if (source.at(i+1) == '\"')
+                        str += "\"";
+                    else
+                        str += source.substr(i, 2);
+                    i += 2;
+                } else {
+                    str += source.at(i);
+                    ++i;
+                }
+            }
+            if (i >= source.size())
+                throw CompilationError("Unterminated string", line, column);
+            tokens.emplace_back(String(str), line, column);
+            column += i;
         }
 
         // Identifier

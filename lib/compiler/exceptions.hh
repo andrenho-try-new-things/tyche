@@ -8,9 +8,13 @@ using namespace std::string_literals;
 
 namespace compiler {
 
-struct LexerInvalidCharacter : public std::runtime_error {
-    LexerInvalidCharacter(char c, int line, int column)
-        : std::runtime_error(std::format("Invalid character '%c' in line %d, column %d.", c, line, column)) {}
+class CompilationError : public std::runtime_error {
+public:
+    CompilationError(const char* description, size_t line_, size_t column_)
+        : std::runtime_error(description), line(line_), column(column_) {}
+
+    const size_t line;
+    const size_t column;
 };
 
 }
