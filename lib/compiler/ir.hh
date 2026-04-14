@@ -5,6 +5,7 @@ namespace compiler {
 
 struct IR {
 
+    bool operator==(IR const&) const { return true; }
 };
 
 }
