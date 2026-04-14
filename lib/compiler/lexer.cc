@@ -18,6 +18,8 @@ std::vector<Token> tokenize(std::string const& source)
 next_token:
         size_t start = i;
 
+        // Integer
+
         if (isdigit(source.at(i))) {
             while (i < source.size() && isdigit(source.at(i)))
                 ++i;
@@ -25,6 +27,8 @@ next_token:
             column += i;
             --i;
         }
+
+        // Symbol
 
         else if (SYMBOLS.contains(source.at(i))) {
             if (source.length() >= i + 1) {
@@ -42,11 +46,11 @@ next_token:
             ++column;
         }
 
+        // Ignored characters
+
         else if (IGNORED.contains(source.at(i))) {
             ++column;
-        }
-
-        else if (source.at(i) == '\n') {
+        } else if (source.at(i) == '\n') {
             ++line;
             column = 1;
         }
