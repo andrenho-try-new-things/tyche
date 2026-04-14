@@ -7,6 +7,11 @@ static const std::string IGNORED = " \t";
 
 namespace compiler {
 
+static bool is_letter(char c)
+{
+    return c == '_' || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+}
+
 std::vector<Token> tokenize(std::string const& source)
 {
     std::vector<Token> tokens;
@@ -44,6 +49,16 @@ next_token:
             }
             tokens.emplace_back(Symbol(std::string(1, source.at(i))), line, column);
             ++column;
+        }
+
+        // Identifier
+
+        else if (is_letter(source.at(i))) {
+            while (i < source.size() && is_letter(source.at(i)))
+                ++i;
+            tokens.emplace_back(Identifier(source.substr(start, i - start)), line, column);
+            column += i;
+            --i;
         }
 
         // Ignored characters
