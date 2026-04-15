@@ -27,9 +27,18 @@ TEST(Lexer, Lexer)
 TEST(Parser, Parser)
 {
     using namespace compiler;
-    auto CHECK = [](std::string const& code, IR const& expected) {
-        ASSERT_EQ(parse(tokenize(code)), expected);
-    };
+    auto compile_to_ir = [](std::string const& code) { return parse(tokenize(code)); };
+
+    ASSERT_EQ(compile_to_ir("return 42;"), (IR {
+        .functions = {
+           { .instructions = {
+               { Operation::PushInt, 42 },
+               { Operation::Return },
+               { Operation::PushNil },
+               { Operation::Return },
+           } }
+        }
+    }));
 }
 
 int main(int argc, char** argv)
