@@ -64,6 +64,8 @@ add_library(lib${PROJECT_NAME} STATIC
         lib/compiler/lexer.hh
         lib/compiler/parser.cc
         lib/compiler/parser.hh
+        lib/compiler/bytecode.cc
+        lib/compiler/bytecode.hh
         lib/compiler/ir.hh)
 
 target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})

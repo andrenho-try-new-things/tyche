@@ -2,6 +2,7 @@
 #define TYCHE_IR_HH
 
 #include <cstdint>
+#include <variant>
 
 namespace compiler {
 
