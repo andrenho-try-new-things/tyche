@@ -4,25 +4,13 @@
 #include <cstdint>
 #include <variant>
 
+#include "../vm/instruction.hh"
+
 namespace compiler {
-
-enum class Operation : uint8_t {
-    PushNil, PushInt, Pop,
-    Return,
-};
-
-using Operand = std::variant<std::monostate, int32_t>;
-
-struct Instruction {
-    Operation operation;
-    Operand operand1 = std::monostate();
-
-    bool operator==(Instruction const& rhs) const { return operation==rhs.operation && operand1==rhs.operand1; }
-};
 
 struct IR {
     struct Function {
-        std::vector<Instruction> instructions;
+        std::vector<vm::Instruction> instructions;
 
         bool operator==(Function const& rhs) const { return instructions==rhs.instructions; }
     };

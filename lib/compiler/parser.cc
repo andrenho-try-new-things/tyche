@@ -4,6 +4,8 @@
 
 #include "exceptions.hh"
 
+using namespace vm;
+
 /* Grammar:
 
 <statements> ::= <statement> | <statement> <statements>

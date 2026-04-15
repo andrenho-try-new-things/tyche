@@ -4,11 +4,13 @@
 #include <cstdint>
 #include <vector>
 
-#include "ir.hh"
+#include "../compiler/ir.hh"
 
 #define DIRECT_IR_ACCESS 1
+  // DIRECT_IR_ACCESS undefined - the bytecode is generated in the byte array. This is the default method.
+  // DIRECT_IR_ACCESS 1 - the bytecode is a copy of the IR. This is used temporarily until the final bytecode is built.
 
-namespace compiler {
+namespace vm {
 
 struct Location {
     size_t function_id;
@@ -19,18 +21,18 @@ struct NextInstruction {
     Instruction instruction;
     size_t      size;
 
-    NextInstruction(Instruction const& instruction, size_t size) :instruction(instruction), size(size) {}
+    NextInstruction(Instruction const& instruction_, size_t size_) : instruction(instruction_), size(size_) {}
 };
 
 class Bytecode {
 public:
-    static Bytecode create_from_ir(IR const& ir);
+    static Bytecode create_from_ir(compiler::IR const& ir);
 
     [[nodiscard]] NextInstruction next_instruction(Location const& location) const;
 
 private:
 #ifdef DIRECT_IR_ACCESS
-    IR ir_;
+    compiler::IR ir_;
 #else
     std::vector<uint8_t> data_;
 #endif
