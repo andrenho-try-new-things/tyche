@@ -60,7 +60,7 @@ TEST(BaseVM, StackOperations)
 auto vm_test = []<typename T>(std::string const& code, T const& expected) {
     vm::Bytecode bytecode = compiler::compile(code);
     if (debug)
-        std::cout << bytecode;
+        std::cout << "Bytecode output:\n" << bytecode << "-------------------\n";
 
     vm::VM vm;
     vm.load(std::move(bytecode));
