@@ -1,0 +1,21 @@
+- [x] Initial setup
+- [ ] Local variables
+- [ ] Functions
+  - [ ] Function parameters
+  - [ ] Native functions
+- [ ] Control flow
+- [ ] Basic types
+  - [ ] Boolean
+  - [ ] Float
+  - [ ] String
+- [ ] Arithmetic operations
+  - [ ] Equality
+  - [ ] Logical
+  - [ ] Concatenation
+- [ ] Tables + GC
+  - [ ] Metamethods?
+  - [ ] Arrays
+- [ ] Error handling
+- [ ] Closures
+- [ ] Imports (linker)
+- [ ] Standard library
