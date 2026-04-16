@@ -2,6 +2,8 @@
 #define TYCHE_BYTECODE_HH
 
 #include <cstdint>
+#include <optional>
+#include <string>
 #include <vector>
 
 #include "../compiler/ir.hh"
@@ -28,7 +30,10 @@ class Bytecode {
 public:
     static Bytecode create_from_ir(compiler::IR const& ir);
 
-    [[nodiscard]] NextInstruction next_instruction(Location const& location) const;
+    [[nodiscard]] std::optional<NextInstruction> next_instruction(Location const& location) const;
+    [[nodiscard]] size_t n_functions() const;
+
+    friend std::ostream& operator<<(std::ostream& os, Bytecode const& b);
 
 private:
 #ifdef DIRECT_IR_ACCESS

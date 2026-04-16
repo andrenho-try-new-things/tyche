@@ -58,9 +58,14 @@ TEST(BaseVM, StackOperations)
 }
 
 auto vm_test = []<typename T>(std::string const& code, T const& expected) {
+    vm::Bytecode bytecode = compiler::compile(code);
+    if (debug)
+        std::cout << bytecode;
+
     vm::VM vm;
-    vm.load(compiler::compile(code));
+    vm.load(std::move(bytecode));
     vm.run();
+
     ASSERT_EQ(vm.stack().size(), 1);
     ASSERT_EQ(vm.stack().back(), vm::Value(expected));
 };
@@ -72,6 +77,8 @@ TEST(VM, CompiledCode)
 
 int main(int argc, char** argv)
 {
+    debug = getenv("DEBUG");
+
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

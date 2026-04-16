@@ -5,13 +5,15 @@ namespace vm {
 
 bool VM::step()
 {
-    NextInstruction next = bytecode_.next_instruction(loc_);
-    switch (next.instruction.operation) {
+    auto next = bytecode_.next_instruction(loc_);
+    if (!next)
+        throw ExecutionException("Out of code area bounds");
+    switch (next->instruction.operation) {
         case Operation::PushNil:
             push_nil();
             break;
         case Operation::PushInt:
-            push_integer(std::get<int32_t>(next.instruction.operand1));
+            push_integer(std::get<int32_t>(next->instruction.operand1));
             break;
         case Operation::Pop:
             pop();
@@ -25,7 +27,7 @@ bool VM::step()
             throw ExecutionException("Invalid opcode");
     }
 
-    loc_.pc += next.size;
+    loc_.pc += next->size;
     return false;
 }
 

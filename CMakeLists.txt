@@ -59,25 +59,27 @@ FetchContent_MakeAvailable(googletest)
 #
 
 add_library(lib${PROJECT_NAME} STATIC
+        lib/vm/basevm.cc
+        lib/vm/basevm.hh
+        lib/vm/bytecode.cc
+        lib/vm/bytecode.hh
+        lib/vm/instruction.hh
+        lib/vm/value.cc
+        lib/vm/value.hh
+        lib/vm/vm.hh
+        lib/vm/vm.cc
+        lib/vm/exception.hh
         lib/compiler/exceptions.hh
         lib/compiler/lexer.cc
         lib/compiler/lexer.hh
         lib/compiler/parser.cc
         lib/compiler/parser.hh
         lib/compiler/ir.hh
-        lib/vm/basevm.cc
-        lib/vm/basevm.hh
-        lib/vm/bytecode.cc
-        lib/vm/bytecode.hh
-        lib/vm/instruction.hh
         lib/compiler/linker.cc
         lib/compiler/linker.hh
         lib/compiler/compiler.cc
         lib/compiler/compiler.hh
-        lib/vm/value.cc
-        lib/vm/value.hh
-        lib/vm/vm.hh
-        lib/vm/vm.cc)
+)
 
 target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
 
@@ -85,8 +87,7 @@ target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
 # tests
 #
 
-add_executable(${PROJECT_NAME}-test tests.cc
-        lib/vm/exception.hh)
+add_executable(${PROJECT_NAME}-test tests.cc)
 target_link_libraries(${PROJECT_NAME}-test lib${PROJECT_NAME} gtest_main)
 add_test(NAME tyche_test COMMAND ${PROJECT_NAME}-test)
 
