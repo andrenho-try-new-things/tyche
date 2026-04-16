@@ -6,6 +6,8 @@
 #include "lib/compiler/ir.hh"
 #include "lib/vm/vm.hh"
 
+static bool debug;
+
 TEST(Lexer, Lexer)
 {
     using namespace compiler;
@@ -55,17 +57,17 @@ TEST(BaseVM, StackOperations)
     ASSERT_EQ(vm.stack().back(), Value(542));
 }
 
+auto vm_test = []<typename T>(std::string const& code, T const& expected) {
+    vm::VM vm;
+    vm.load(compiler::compile(code));
+    vm.run();
+    ASSERT_EQ(vm.stack().size(), 1);
+    ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+};
+
 TEST(VM, CompiledCode)
 {
-    auto test = []<typename T>(std::string const& code, T const& expected) {
-        vm::VM vm;
-        vm.load(compiler::compile(code));
-        vm.run();
-        ASSERT_EQ(vm.stack().size(), 1);
-        ASSERT_EQ(vm.stack().back(), vm::Value(expected));
-    };
-
-    test("return 42;", 42);
+    vm_test("return 42;", 42);
 }
 
 int main(int argc, char** argv)
