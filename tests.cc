@@ -6,8 +6,6 @@
 #include "lib/compiler/ir.hh"
 #include "lib/vm/vm.hh"
 
-static bool debug;
-
 TEST(Lexer, Lexer)
 {
     using namespace compiler;
@@ -57,14 +55,14 @@ TEST(BaseVM, StackOperations)
     ASSERT_EQ(vm.stack().back(), Value(542));
 }
 
-auto vm_test = []<typename T>(std::string const& code, T const& expected) {
+template <typename T>
+void vm_test(std::string const& code, T const& expected) {
     vm::Bytecode bytecode = compiler::compile(code);
-    if (debug)
-        std::cout << "Bytecode output:\n" << bytecode << "-------------------\n";
+    std::cout << "Bytecode output:\n" << bytecode << "-------------------\n";
 
     vm::VM vm;
     vm.load(std::move(bytecode));
-    vm.run();
+    vm.run_debug();
 
     ASSERT_EQ(vm.stack().size(), 1);
     ASSERT_EQ(vm.stack().back(), vm::Value(expected));
@@ -77,8 +75,6 @@ TEST(VM, CompiledCode)
 
 int main(int argc, char** argv)
 {
-    debug = getenv("DEBUG");
-
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }

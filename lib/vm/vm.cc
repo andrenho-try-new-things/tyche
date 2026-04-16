@@ -1,6 +1,8 @@
 #include "vm.hh"
 #include "exception.hh"
 
+#include <iostream>
+
 namespace vm {
 
 bool VM::step()
@@ -31,9 +33,25 @@ bool VM::step()
     return false;
 }
 
+bool VM::step_debug()
+{
+    auto next = bytecode_.next_instruction(loc_);
+    bool b = step();
+
+    std::cout << next->instruction << "\n";
+    std::cout << "  -> " << debug_stack() << "\n";
+
+    return b;
+}
+
 void VM::run()
 {
-    while (step());
+    while (!step());
+}
+
+void VM::run_debug()
+{
+    while (!step_debug());
 }
 
 }
