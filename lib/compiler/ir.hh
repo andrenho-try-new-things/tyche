@@ -9,8 +9,15 @@
 namespace compiler {
 
 struct IR {
+    struct Variable {
+        std::string name;
+    };
+
     struct Function {
         std::vector<vm::Instruction> instructions;
+        std::vector<Variable>        local_vars;
+
+        size_t add_variable(std::string const& var_name) { local_vars.emplace_back(var_name); return local_vars.size() - 1; }
 
         bool operator==(Function const& rhs) const { return instructions==rhs.instructions; }
     };

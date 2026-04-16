@@ -1,7 +1,7 @@
 #include "lexer.hh"
 #include "exceptions.hh"
 
-static const std::string COMBINED_SYMBOLS_L2[] = { "@=" };
+static const std::string COMBINED_SYMBOLS_L2[] = { "@=", ":=" };
 static const std::string SYMBOLS = "!#$%&'()*+,-./:;<=>?@[\\]^_`{|}~";
 static const std::string IGNORED = " \t";
 

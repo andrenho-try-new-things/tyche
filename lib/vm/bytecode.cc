@@ -47,4 +47,9 @@ std::ostream& operator<<(std::ostream& os, Bytecode const& b)
     return os;
 }
 
+size_t Bytecode::n_local_vars(FunctionId f_id) const
+{
+    return ir_.functions.at(f_id).local_vars.size();
+}
+
 }

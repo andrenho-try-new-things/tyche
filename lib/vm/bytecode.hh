@@ -14,9 +14,11 @@
 
 namespace vm {
 
+using FunctionId = size_t;
+
 struct Location {
-    size_t function_id;
-    size_t pc;
+    FunctionId function_id;
+    size_t     pc;
 };
 
 struct NextInstruction {
@@ -32,6 +34,7 @@ public:
 
     [[nodiscard]] std::optional<NextInstruction> next_instruction(Location const& location) const;
     [[nodiscard]] size_t n_functions() const;
+    [[nodiscard]] size_t n_local_vars(FunctionId f_id) const;
 
     friend std::ostream& operator<<(std::ostream& os, Bytecode const& b);
 

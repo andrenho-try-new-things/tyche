@@ -11,6 +11,8 @@ using namespace vm;
 <statements> ::= <statement> | <statement> <statements>
 
 <statement>  ::= "return" <expr> ";"
+             |   IDENTIFIER ":=" <expr> ";"
+             |   <EOF>
 
 <expr> ::= INTEGER
 
@@ -43,7 +45,7 @@ static void expect_symbol(Context& ctx, std::string const& symbol)
 template <typename... Args>
 static void add_op(Context& ctx, Args... args)
 {
-    ctx.ir.functions[ctx.function_id].instructions.emplace_back(args...);
+    ctx.ir.functions.at(ctx.function_id).instructions.emplace_back(args...);
 }
 
 static void expr(Context& ctx)
@@ -60,16 +62,22 @@ static void statements(Context& ctx)
 {
     for (;;) {
         Token t = ingest_token(ctx);
+
         if (auto *id = std::get_if<Identifier>(&t.token)) {
             if (id->identifier == "return") {
                 expr(ctx);
                 expect_symbol(ctx, ";");
                 add_op(ctx, Operation::Return);
             } else {
-                throw CompilationError("Invalid identifier in statement", t.line, t.column);
+                expect_symbol(ctx, ":=");
+                expr(ctx);
+                expect_symbol(ctx, ";");
+                add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.function_id).add_variable(id->identifier));
             }
+
         } else if (H<EOF_>(t.token)) {
             return;
+
         } else {
             throw CompilationError("Invalid statement", t.line, t.column);
         }

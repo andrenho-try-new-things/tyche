@@ -8,6 +8,7 @@ namespace vm {
 enum class Operation : uint8_t {
     PushNil, PushInt, Pop,
     Return, ReturnNil,
+    SetLocal
 };
 
 using Operand = std::variant<std::monostate, int32_t>;
@@ -25,6 +26,7 @@ struct Instruction {
             case Operation::Pop:        os << "POP"; break;
             case Operation::Return:     os << "RET"; break;
             case Operation::ReturnNil:  os << "RETNIL"; break;
+            case Operation::SetLocal:   os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
             default:                    os << "???"; break;
         }
         return os;

@@ -16,7 +16,7 @@ struct Symbol {
     bool operator!=(Symbol const& other) const { return !(*this == other); }
 
     friend std::ostream& operator<<(std::ostream& os, const Symbol& t) {
-        return os << "Symbol { " << t.symbol << " }";
+        return os << "Symbol {" << t.symbol << "}";
     }
 };
 
@@ -28,7 +28,7 @@ struct Integer {
     bool operator!=(Integer const& other) const { return !(*this == other); }
 
     friend std::ostream& operator<<(std::ostream& os, const Integer& t) {
-        return os << "Integer { " << t.value << " }";
+        return os << "Integer {" << t.value << "}";
     }
 };
 
@@ -42,7 +42,7 @@ struct Float {
     bool operator!=(Float const& other) const { return !(*this == other); }
 
     friend std::ostream& operator<<(std::ostream& os, const Float& t) {
-        return os << "Float { " << t.value << " }";
+        return os << "Float {" << t.value << "}";
     }
 };
 
@@ -54,7 +54,7 @@ struct Identifier {
     bool operator!=(Identifier const& other) const { return !(*this == other); }
 
     friend std::ostream& operator<<(std::ostream& os, const Identifier& t) {
-        return os << "Identifier { " << t.identifier << " }";
+        return os << "Identifier {" << t.identifier << "}";
     }
 };
 
@@ -66,7 +66,7 @@ struct String {
     bool operator!=(String const& other) const { return !(*this == other); }
 
     friend std::ostream& operator<<(std::ostream& os, const String& t) {
-        return os << "String { " << t.str << " }";
+        return os << "String {" << t.str << "}";
     }
 };
 

@@ -57,20 +57,35 @@ TEST(BaseVM, StackOperations)
 
 template <typename T>
 void vm_test(std::string const& code, T const& expected) {
+    static const char* RULER = "-------------------\n";
+    std::cout << code << "\n" << RULER;
+
+    auto tokens = compiler::tokenize(code);
+    std::cout << "Tokens:\n";
+    for (auto const& token: tokens) std::cout << "[" << token << "] ";
+    std::cout << "\n" << RULER;
+
     vm::Bytecode bytecode = compiler::compile(code);
-    std::cout << "Bytecode output:\n" << bytecode << "-------------------\n";
+    std::cout << "Bytecode output:\n" << bytecode << RULER;
 
     vm::VM vm;
     vm.load(std::move(bytecode));
+
+    std::cout << "VM execution:\n";
     vm.run_debug();
+    std::cout << RULER;
 
     ASSERT_EQ(vm.stack().size(), 1);
     ASSERT_EQ(vm.stack().back(), vm::Value(expected));
-};
+}
 
-TEST(VM, CompiledCode)
+TEST(VM, GeneralCode)
 {
     vm_test("return 42;", 42);
+}
+
+TEST(VM, LocalVariables) {
+    vm_test("a := 52; return 52;", 52);
 }
 
 int main(int argc, char** argv)
