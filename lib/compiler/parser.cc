@@ -78,8 +78,7 @@ static void statements(Context& ctx)
 
 static void end_function(Context& ctx)
 {
-    add_op(ctx, Operation::PushNil);
-    add_op(ctx, Operation::Return);
+    add_op(ctx, Operation::ReturnNil);
 }
 
 IR parse(std::vector<Token> const& tks)

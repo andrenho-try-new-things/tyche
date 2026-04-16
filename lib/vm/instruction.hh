@@ -5,7 +5,7 @@ namespace vm {
 
 enum class Operation : uint8_t {
     PushNil, PushInt, Pop,
-    Return,
+    Return, ReturnNil,
 };
 
 using Operand = std::variant<std::monostate, int32_t>;

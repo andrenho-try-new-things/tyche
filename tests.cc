@@ -2,7 +2,9 @@
 
 #include "lib/compiler/lexer.hh"
 #include "lib/compiler/parser.hh"
+#include "lib/compiler/compiler.hh"
 #include "lib/compiler/ir.hh"
+#include "lib/vm/vm.hh"
 
 TEST(Lexer, Lexer)
 {
@@ -35,11 +37,35 @@ TEST(Parser, Parser)
            { .instructions = {
                { Operation::PushInt, 42 },
                { Operation::Return },
-               { Operation::PushNil },
-               { Operation::Return },
+               { Operation::ReturnNil },
            } }
         }
     }));
+}
+
+TEST(BaseVM, StackOperations)
+{
+    using namespace vm;
+    vm::BaseVM vm;
+
+    ASSERT_TRUE(vm.stack().empty());
+
+    vm.push_integer(542);
+    ASSERT_EQ(vm.stack().size(), 1);
+    ASSERT_EQ(vm.stack().back(), Value(542));
+}
+
+TEST(VM, CompiledCode)
+{
+    auto test = []<typename T>(std::string const& code, T const& expected) {
+        vm::VM vm;
+        vm.load(compiler::compile(code));
+        vm.run();
+        ASSERT_EQ(vm.stack().size(), 1);
+        ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+    };
+
+    test("return 42;", 42);
 }
 
 int main(int argc, char** argv)
