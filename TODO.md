@@ -1,6 +1,9 @@
 - [x] Initial setup
 - [x] Local variables
+  - [ ] Add optional debugging info - variable name
+  - [ ] Retrieve variables
 - [ ] Functions
+  - [ ] Local function variables
   - [ ] Function parameters
   - [ ] Native functions
 - [ ] Control flow
