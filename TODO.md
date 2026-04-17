@@ -1,5 +1,5 @@
 - [x] Initial setup
-- [ ] Local variables
+- [x] Local variables
 - [ ] Functions
   - [ ] Function parameters
   - [ ] Native functions
@@ -19,3 +19,4 @@
 - [ ] Closures
 - [ ] Imports (linker)
 - [ ] Standard library
+

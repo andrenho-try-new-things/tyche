@@ -21,12 +21,9 @@ public:
     [[nodiscard]] std::string debug_stack() const;
 
 protected:
-    struct Function {
-
-    };
-
     std::vector<Value> stack_;
-    std::stack<Function> function_;
+
+    Value pop_value();
 };
 
 }

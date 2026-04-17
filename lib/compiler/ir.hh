@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <variant>
+#include <unordered_map>
 
 #include "../vm/instruction.hh"
 
@@ -10,16 +11,23 @@ namespace compiler {
 
 struct IR {
     struct Variable {
-        std::string name;
+        size_t index;
     };
 
     struct Function {
-        std::vector<vm::Instruction> instructions;
-        std::vector<Variable>        local_vars;
+        std::vector<vm::Instruction>              instructions;
+        std::unordered_map<std::string, Variable> local_vars;
 
-        size_t add_variable(std::string const& var_name) { local_vars.emplace_back(var_name); return local_vars.size() - 1; }
+        size_t add_variable(std::string const& var_name) {
+            size_t idx = local_vars.size();
+            local_vars[var_name] = { .index = idx };
+            return idx;
+        }
 
-        bool operator==(Function const& rhs) const { return instructions==rhs.instructions; }
+        bool operator==(Function const& rhs) const
+        {
+            return std::tie(instructions)==std::tie(rhs.instructions);  // TODO - add local vars comparison
+        }
     };
 
     std::vector<Function> functions;

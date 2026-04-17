@@ -29,4 +29,11 @@ std::string BaseVM::debug_stack() const
     }
 }
 
+Value BaseVM::pop_value()
+{
+    Value v = std::move(stack_.back());
+    stack_.pop_back();
+    return v;
+}
+
 }

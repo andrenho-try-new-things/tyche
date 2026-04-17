@@ -2,8 +2,16 @@
 #include "exception.hh"
 
 #include <iostream>
+#include <ranges>
+
+using namespace std::string_view_literals;
 
 namespace vm {
+
+void VM::load(vm::Bytecode&& bytecode)
+{
+    bytecode_ = std::move(bytecode);
+}
 
 bool VM::step()
 {
@@ -21,10 +29,15 @@ bool VM::step()
             pop();
             break;
         case Operation::Return:
-            return true;  // TODO - return from function
+            exit_function();
+            return function_.empty();
         case Operation::ReturnNil:
             push_nil();
-            return true;  // TODO - return from function
+            exit_function();
+            return function_.empty();
+        case Operation::SetLocal:
+            function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = pop_value();
+            break;
         default:
             throw ExecutionException("Invalid opcode");
     }
@@ -40,18 +53,46 @@ bool VM::step_debug()
 
     std::cout << next->instruction << "\n";
     std::cout << "  -> " << debug_stack() << "\n";
+    std::cout << "  -> vars: {" << debug_vars() << "}\n";
 
     return b;
 }
 
 void VM::run()
 {
+    enter_function(0);
     while (!step());
 }
 
 void VM::run_debug()
 {
+    enter_function(0);
     while (!step_debug());
+}
+
+void VM::enter_function(FunctionId f_id)
+{
+    Function f = { .id = f_id, .vars = {} };
+    f.vars.resize(bytecode_.n_local_vars(f_id), vm::Value());
+    function_.emplace(std::move(f));
+}
+
+void VM::exit_function()
+{
+    function_.pop();
+}
+
+std::string VM::debug_vars() const
+{
+    std::vector<std::string> vars;
+    if (!function_.empty()) {
+        for (auto const& v: function_.top().vars)
+            vars.push_back(std::to_string(v));
+        auto r = vars | std::views::join_with(", "sv);
+        return { r.begin(), r.end() };
+    } else {
+        return "";
+    }
 }
 
 }

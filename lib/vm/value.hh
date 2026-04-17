@@ -7,7 +7,9 @@
 
 namespace vm {
 
-using Value = std::variant<std::monostate, int32_t>;
+using Nil = std::monostate;
+
+using Value = std::variant<Nil, int32_t>;
 
 }
 
