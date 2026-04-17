@@ -21,10 +21,10 @@ bool VM::step()
             pop();
             break;
         case Operation::Return:
-            return true;  // TODO
+            return true;  // TODO - return from function
         case Operation::ReturnNil:
             push_nil();
-            return true;  // TODO
+            return true;  // TODO - return from function
         default:
             throw ExecutionException("Invalid opcode");
     }

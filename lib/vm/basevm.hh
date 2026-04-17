@@ -1,6 +1,7 @@
 #ifndef TYCHE_BASEVM_HH
 #define TYCHE_BASEVM_HH
 
+#include <stack>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,12 @@ public:
     [[nodiscard]] std::string debug_stack() const;
 
 protected:
+    struct Function {
+
+    };
+
     std::vector<Value> stack_;
+    std::stack<Function> function_;
 };
 
 }
