@@ -90,6 +90,18 @@ TEST(VM, LocalVariables) {
     vm_test("a := 52; b := 13; return b;", 13);
 }
 
+// TODO - variable assignment
+
+TEST(VM, Scopes) {
+    vm_test("a := 52; { b := 12; } return a;", 52);
+}
+
+/*
+TEST(VM, Functions) {
+    vm_test("return func() { return 42; }();", 42);
+}
+ */
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);

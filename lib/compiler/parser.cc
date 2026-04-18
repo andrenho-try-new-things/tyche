@@ -14,7 +14,9 @@ using namespace vm;
              |   IDENTIFIER ":=" <expr> ";"
              |   <EOF>
 
-<expr> ::= INTEGER
+<expr> ::= "func" "(" ")" "{" statements "}"
+       |   INTEGER
+       |   IDENTIFIER
 
 */
 
@@ -29,6 +31,12 @@ struct Context {
 };
 
 static void expr(Context& ctx);
+static bool statement(Context& ctx);
+
+static Token peek_token(Context& ctx)
+{
+    return ctx.tokens.front();
+}
 
 static Token ingest_token(Context& ctx)
 {
@@ -56,6 +64,18 @@ static void return_(Context& ctx)
     expect_symbol(ctx, ";");
     add_op(ctx, Operation::Return);
 }
+
+/*
+static void function(Context& ctx)
+{
+    expect_symbol(ctx, "(");
+    // TODO - function parameters
+    expect_symbol(ctx, ")");
+    expect_symbol(ctx, "{");
+    statement(ctx);
+    expect_symbol(ctx, "}");
+}
+*/
 
 static void get_local_variable(std::string const& identifier, Context& ctx, Token const& t)
 {
@@ -87,23 +107,49 @@ static void expr(Context& ctx)
     }
 }
 
-static void statements(Context& ctx)
+static bool statement(Context& ctx)
+{
+    Token t = ingest_token(ctx);
+
+    if (auto *id = std::get_if<Identifier>(&t.token)) {
+        if (id->identifier == "return")
+            return_(ctx);
+        else
+            set_local_variable(id->identifier, ctx);
+
+    } else if (H<EOF_>(t.token)) {
+        return true;
+
+    } else {
+        throw CompilationError("Invalid statement", t.line, t.column);
+    }
+
+    return false;
+}
+
+static void statements(Context& ctx, int scope_level = 0)
 {
     for (;;) {
-        Token t = ingest_token(ctx);
+        Token t = peek_token(ctx);
 
-        if (auto *id = std::get_if<Identifier>(&t.token)) {
-            if (id->identifier == "return")
-                return_(ctx);
-            else
-                set_local_variable(id->identifier, ctx);
-
-        } else if (H<EOF_>(t.token)) {
-            return;
-
-        } else {
-            throw CompilationError("Invalid statement", t.line, t.column);
+        // open/close brackes
+        if (auto *s = std::get_if<Symbol>(&t.token)) {
+            if (s->symbol == "{") {
+                ingest_token(ctx);
+                // TODO - enter scope
+                statements(ctx, scope_level + 1);
+            } else if (s->symbol == "}") {
+                ingest_token(ctx);
+                if (scope_level == 0)
+                    throw CompilationError("Unexpected '}' in statement", t.line, t.column);
+                // TODO - exit scope
+                return;
+            }
         }
+
+        // normal statement
+        if (statement(ctx))
+            break;
     }
 }
 
