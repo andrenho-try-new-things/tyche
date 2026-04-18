@@ -113,7 +113,7 @@ TEST(VM, LocalVariables) {
 
 TEST(VM, Scopes) {
     vm_test("a := 52; { b := 12; } return a;", 52);
-    vm_test("a := 52; { b := 12; } return a;", 52);
+    vm_test("a := 52; { b := 12; } return b;", ExpectCompilationError);
 }
 
 /*
