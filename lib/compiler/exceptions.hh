@@ -11,7 +11,7 @@ namespace compiler {
 class CompilationError : public std::runtime_error {
 public:
     CompilationError(const char* description, size_t line_, size_t column_)
-        : std::runtime_error(description), line(line_), column(column_) {}
+        : std::runtime_error(std::format("Compilation error in line {}, column {}: {}", line, column, description)), line(line_), column(column_) {}
 
     CompilationError(std::string const& description, size_t line_, size_t column_)
         : CompilationError(description.c_str(), line_, column_) {}

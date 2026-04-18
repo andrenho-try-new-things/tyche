@@ -5,6 +5,8 @@
 #include "lib/compiler/compiler.hh"
 #include "lib/compiler/ir.hh"
 #include "lib/vm/vm.hh"
+#include "lib/compiler/exceptions.hh"
+#include "lib/vm/exception.hh"
 
 TEST(Lexer, Lexer)
 {
@@ -55,8 +57,14 @@ TEST(BaseVM, StackOperations)
     ASSERT_EQ(vm.stack().back(), Value(542));
 }
 
+constexpr int32_t ExpectCompilationError = 432840923;
+constexpr int32_t ExpectRuntimeError = 432840924;
+
 template <typename T>
-void vm_test(std::string const& code, T const& expected) {
+void vm_test(std::string const& code, T const& expected)
+{
+    vm::Value value_expected(expected);
+
     static const char* RULER = "-------------------\n";
     std::cout << code << "\n" << RULER;
 
@@ -65,6 +73,11 @@ void vm_test(std::string const& code, T const& expected) {
     for (auto const& token: tokens) std::cout << "[" << token << "] ";
     std::cout << "\n" << RULER;
 
+    if (auto *i = std::get_if<int32_t>(&value_expected); i && *i == ExpectCompilationError) {
+        ASSERT_THROW(compiler::compile(code, true), compiler::CompilationError);
+        return;
+    }
+
     vm::Bytecode bytecode = compiler::compile(code, true);
     std::cout << "Bytecode output:\n" << bytecode << RULER;
 
@@ -72,6 +85,11 @@ void vm_test(std::string const& code, T const& expected) {
     vm.load(std::move(bytecode));
 
     std::cout << "VM execution:\n";
+    if (auto *i = std::get_if<int32_t>(&value_expected); i && *i == ExpectRuntimeError) {
+        ASSERT_THROW(vm.run_debug(), vm::ExecutionException);
+        return;
+    }
+
     vm.run_debug();
     std::cout << RULER;
 
@@ -82,6 +100,7 @@ void vm_test(std::string const& code, T const& expected) {
 TEST(VM, GeneralCode)
 {
     vm_test("return 42;", 42);
+    vm_test("42;", ExpectCompilationError);
 }
 
 TEST(VM, LocalVariables) {
@@ -93,6 +112,7 @@ TEST(VM, LocalVariables) {
 // TODO - variable assignment
 
 TEST(VM, Scopes) {
+    vm_test("a := 52; { b := 12; } return a;", 52);
     vm_test("a := 52; { b := 12; } return a;", 52);
 }
 
