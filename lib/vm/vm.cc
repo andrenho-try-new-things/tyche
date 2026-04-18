@@ -38,6 +38,9 @@ bool VM::step()
         case Operation::SetLocal:
             function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = pop_value();
             break;
+        case Operation::GetLocal:
+            push_value(function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)));
+            break;
         default:
             throw ExecutionException("Invalid opcode");
     }
@@ -54,8 +57,10 @@ bool VM::step_debug()
     std::cout << next->instruction << "  ";
     if (bytecode_.has_debugging_info()) {
         if (next->instruction.operation == Operation::SetLocal) {
-            std::cout << "{" << bytecode_.debug_variable_name(function_.top().id, std::get<int32_t>(next->instruction.operand1))
-                      << "=" << function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) << "}";
+            std::cout << "; " << bytecode_.debug_variable_name(function_.top().id, std::get<int32_t>(next->instruction.operand1))
+                      << "=" << function_.top().vars.at(std::get<int32_t>(next->instruction.operand1));
+        } else if (next->instruction.operation == Operation::GetLocal) {
+            std::cout << "; " << bytecode_.debug_variable_name(function_.top().id, std::get<int32_t>(next->instruction.operand1));
         }
     }
     std::cout << "\n";

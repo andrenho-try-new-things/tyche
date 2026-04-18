@@ -24,6 +24,7 @@ protected:
     std::vector<Value> stack_;
 
     Value pop_value();
+    void  push_value(Value const& val);
 };
 
 }

@@ -85,7 +85,7 @@ TEST(VM, GeneralCode)
 }
 
 TEST(VM, LocalVariables) {
-    vm_test("a := 52; return 52;", 52);
+    vm_test("a := 52; return a;", 52);
 }
 
 int main(int argc, char** argv)

@@ -36,4 +36,9 @@ Value BaseVM::pop_value()
     return v;
 }
 
+void BaseVM::push_value(Value const& val)
+{
+    stack_.emplace_back(val);
+}
+
 }

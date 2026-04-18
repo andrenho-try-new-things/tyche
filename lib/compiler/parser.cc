@@ -28,6 +28,8 @@ struct Context {
     size_t           function_id;
 };
 
+static void expr(Context& ctx);
+
 static Token ingest_token(Context& ctx)
 {
     Token t = std::move(ctx.tokens.front());
@@ -48,16 +50,6 @@ static void add_op(Context& ctx, Args... args)
     ctx.ir.functions.at(ctx.function_id).instructions.emplace_back(args...);
 }
 
-static void expr(Context& ctx)
-{
-    Token t = ingest_token(ctx);
-    if (auto *i = std::get_if<Integer>(&t.token)) {
-        add_op(ctx, Operation::PushInt, i->value);
-    } else {
-        throw CompilationError("Invalid expression", t.line, t.column);
-    }
-}
-
 static void return_(Context& ctx)
 {
     expr(ctx);
@@ -65,12 +57,34 @@ static void return_(Context& ctx)
     add_op(ctx, Operation::Return);
 }
 
-static void variable(std::string const& identifier, Context& ctx)
+static void get_local_variable(std::string const& identifier, Context& ctx, Token const& t)
+{
+    auto const& vars = ctx.ir.functions.at(ctx.function_id).local_vars;
+    auto it = vars.find(identifier);
+    if (it == vars.end())
+        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
+    else
+        add_op(ctx, Operation::GetLocal, (int32_t) it->second.index);
+}
+
+static void set_local_variable(std::string const& identifier, Context& ctx)
 {
     expect_symbol(ctx, ":=");
     expr(ctx);
     expect_symbol(ctx, ";");
     add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.function_id).add_variable(identifier));
+}
+
+static void expr(Context& ctx)
+{
+    Token t = ingest_token(ctx);
+    if (auto *i = std::get_if<Integer>(&t.token)) {
+        add_op(ctx, Operation::PushInt, i->value);
+    } else if (auto *id = std::get_if<Identifier>(&t.token)) {
+        get_local_variable(id->identifier, ctx, t);
+    } else {
+        throw CompilationError("Invalid expression", t.line, t.column);
+    }
 }
 
 static void statements(Context& ctx)
@@ -82,7 +96,7 @@ static void statements(Context& ctx)
             if (id->identifier == "return")
                 return_(ctx);
             else
-                variable(id->identifier, ctx);
+                set_local_variable(id->identifier, ctx);
 
         } else if (H<EOF_>(t.token)) {
             return;
