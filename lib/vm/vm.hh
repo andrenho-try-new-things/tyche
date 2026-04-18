@@ -28,8 +28,6 @@ private:
 
     void enter_function(FunctionId f_id);
     void exit_function();
-
-    std::string debug_vars() const;
 };
 
 }

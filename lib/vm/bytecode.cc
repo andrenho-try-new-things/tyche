@@ -1,13 +1,16 @@
 #include "bytecode.hh"
 
+using namespace std::string_literals;
+
 namespace vm {
 
 #ifdef DIRECT_IR_ACCESS
 
-Bytecode Bytecode::create_from_ir(compiler::IR const& ir)
+Bytecode Bytecode::create_from_ir(compiler::IR const& ir, bool add_debugging_info)
 {
     Bytecode bytecode;
     bytecode.ir_ = ir;
+    bytecode.has_debugging_info_ = add_debugging_info;
     return bytecode;
 }
 
@@ -22,6 +25,18 @@ size_t Bytecode::n_functions() const
 {
     return ir_.functions.size();
 }
+
+std::string Bytecode::debug_variable_name(FunctionId f_id, size_t var_idx) const
+{
+    if (has_debugging_info_) {
+        auto const& vars = ir_.functions.at(f_id).local_vars;
+        auto it = std::ranges::find_if(vars, [&var_idx](auto const& v) { return v.second.index == var_idx; });
+        return it != vars.end() ? it->first : "(not found)";
+    } else {
+        return "#"s + std::to_string(f_id) + ":" + std::to_string(var_idx);
+    }
+}
+
 
 #else
 

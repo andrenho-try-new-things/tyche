@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "../compiler/ir.hh"
@@ -30,11 +31,14 @@ struct NextInstruction {
 
 class Bytecode {
 public:
-    static Bytecode create_from_ir(compiler::IR const& ir);
+    static Bytecode create_from_ir(compiler::IR const& ir, bool add_debugging_info);
 
     [[nodiscard]] std::optional<NextInstruction> next_instruction(Location const& location) const;
-    [[nodiscard]] size_t n_functions() const;
-    [[nodiscard]] size_t n_local_vars(FunctionId f_id) const;
+    [[nodiscard]] size_t      n_functions() const;
+    [[nodiscard]] size_t      n_local_vars(FunctionId f_id) const;
+
+    [[nodiscard]] bool        has_debugging_info() const { return has_debugging_info_; }
+    [[nodiscard]] std::string debug_variable_name(FunctionId f_id, size_t var_idx) const;
 
     friend std::ostream& operator<<(std::ostream& os, Bytecode const& b);
 
@@ -44,6 +48,7 @@ private:
 #else
     std::vector<uint8_t> data_;
 #endif
+    bool has_debugging_info_;
 };
 
 }

@@ -58,22 +58,31 @@ static void expr(Context& ctx)
     }
 }
 
+static void return_(Context& ctx)
+{
+    expr(ctx);
+    expect_symbol(ctx, ";");
+    add_op(ctx, Operation::Return);
+}
+
+static void variable(std::string const& identifier, Context& ctx)
+{
+    expect_symbol(ctx, ":=");
+    expr(ctx);
+    expect_symbol(ctx, ";");
+    add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.function_id).add_variable(identifier));
+}
+
 static void statements(Context& ctx)
 {
     for (;;) {
         Token t = ingest_token(ctx);
 
         if (auto *id = std::get_if<Identifier>(&t.token)) {
-            if (id->identifier == "return") {
-                expr(ctx);
-                expect_symbol(ctx, ";");
-                add_op(ctx, Operation::Return);
-            } else {
-                expect_symbol(ctx, ":=");
-                expr(ctx);
-                expect_symbol(ctx, ";");
-                add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.function_id).add_variable(id->identifier));
-            }
+            if (id->identifier == "return")
+                return_(ctx);
+            else
+                variable(id->identifier, ctx);
 
         } else if (H<EOF_>(t.token)) {
             return;

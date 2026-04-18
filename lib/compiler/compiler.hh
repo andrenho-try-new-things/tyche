@@ -7,7 +7,7 @@
 
 namespace compiler {
 
-vm::Bytecode compile(std::string const& source);
+vm::Bytecode compile(std::string const& source, bool add_debugging_info=false);
 
 }
 

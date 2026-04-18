@@ -51,9 +51,15 @@ bool VM::step_debug()
     auto next = bytecode_.next_instruction(loc_);
     bool b = step();
 
-    std::cout << next->instruction << "\n";
+    std::cout << next->instruction << "  ";
+    if (bytecode_.has_debugging_info()) {
+        if (next->instruction.operation == Operation::SetLocal) {
+            std::cout << "{" << bytecode_.debug_variable_name(function_.top().id, std::get<int32_t>(next->instruction.operand1))
+                      << "=" << function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) << "}";
+        }
+    }
+    std::cout << "\n";
     std::cout << "  -> " << debug_stack() << "\n";
-    std::cout << "  -> vars: {" << debug_vars() << "}\n";
 
     return b;
 }
@@ -80,19 +86,6 @@ void VM::enter_function(FunctionId f_id)
 void VM::exit_function()
 {
     function_.pop();
-}
-
-std::string VM::debug_vars() const
-{
-    std::vector<std::string> vars;
-    if (!function_.empty()) {
-        for (auto const& v: function_.top().vars)
-            vars.push_back(std::to_string(v));
-        auto r = vars | std::views::join_with(", "sv);
-        return { r.begin(), r.end() };
-    } else {
-        return "";
-    }
 }
 
 }

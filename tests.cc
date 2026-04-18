@@ -65,7 +65,7 @@ void vm_test(std::string const& code, T const& expected) {
     for (auto const& token: tokens) std::cout << "[" << token << "] ";
     std::cout << "\n" << RULER;
 
-    vm::Bytecode bytecode = compiler::compile(code);
+    vm::Bytecode bytecode = compiler::compile(code, true);
     std::cout << "Bytecode output:\n" << bytecode << RULER;
 
     vm::VM vm;
