@@ -5,8 +5,6 @@
 
 #include "exceptions.hh"
 
-using namespace vm;
-
 /* Grammar:
 
 <statements> ::= <statement>
@@ -23,7 +21,10 @@ using namespace vm;
 
 */
 
+using namespace vm;
 #define H std::holds_alternative
+
+
 
 namespace compiler {
 
@@ -112,7 +113,7 @@ static void get_local_variable(std::string const& identifier, Context& ctx, Toke
     throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
 }
 
-static void assign_new_local_variable(std::string const& identifier, Context& ctx)
+static void declare_local_variable(std::string const& identifier, Context& ctx)
 {
     expect_symbol(ctx, ":=");
     expr(ctx);
@@ -144,7 +145,7 @@ static bool statement(Context& ctx)
         if (id->identifier == "return")
             return_(ctx);
         else
-            assign_new_local_variable(id->identifier, ctx);
+            declare_local_variable(id->identifier, ctx);
 
     } else if (H<EOF_>(t.token)) {
         return true;
