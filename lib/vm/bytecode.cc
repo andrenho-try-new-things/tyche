@@ -29,9 +29,7 @@ size_t Bytecode::n_functions() const
 std::string Bytecode::debug_variable_name(FunctionId f_id, size_t var_idx) const
 {
     if (has_debugging_info_) {
-        auto const& vars = ir_.functions.at(f_id).local_vars;
-        auto it = std::ranges::find_if(vars, [&var_idx](auto const& v) { return v.second.index == var_idx; });
-        return it != vars.end() ? it->first : "(not found)";
+        return ir_.functions.at(f_id).local_vars.at(var_idx).name;
     } else {
         return "#"s + std::to_string(f_id) + ":" + std::to_string(var_idx);
     }

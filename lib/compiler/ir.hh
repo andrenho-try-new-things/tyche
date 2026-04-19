@@ -11,22 +11,24 @@ namespace compiler {
 
 struct IR {
     struct Variable {
-        size_t index;
+        std::string name;
+
+        bool operator==(Variable const& var) const = default;
     };
 
     struct Function {
         std::vector<vm::Instruction>              instructions;
-        std::unordered_map<std::string, Variable> local_vars;
+        std::vector<Variable>                     local_vars;
 
         size_t add_variable(std::string const& var_name) {
-            size_t idx = local_vars.size();
-            local_vars[var_name] = { .index = idx };
-            return idx;
+            local_vars.push_back({ var_name });
+            return local_vars.size() - 1;
         }
 
         bool operator==(Function const& rhs) const
         {
-            return std::tie(instructions)==std::tie(rhs.instructions);  // TODO - add local vars comparison
+            return std::tie(instructions) == std::tie(rhs.instructions)
+                && std::tie(local_vars) == std::tie(rhs.local_vars);
         }
     };
 
