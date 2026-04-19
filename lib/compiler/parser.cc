@@ -22,198 +22,256 @@
 */
 
 using namespace vm;
-#define H std::holds_alternative
-
-
 
 namespace compiler {
 
-struct LocalVar {
-    std::string name;
-    size_t      idx;
-};
+class Parser {
+public:
+    explicit Parser(std::vector<Token> const& tks)
+        : tokens({ tks.begin(), tks.end() }),
+          ir({ .functions = { {} } }),
+          current_function_id(0),
+          functions({ Function { .n_local_vars = 0, .scope_stack = { {} } } }) {}
 
-struct Scope {
-    std::vector<LocalVar> local_vars {};
-};
+    IR parse();
 
-struct Function {
-    size_t             n_local_vars = 0;
-    std::vector<Scope> scope_stack {};
-};
+private:
+    struct LocalVar {
+        std::string name;
+        size_t      idx;
+    };
 
-struct Context {
+    struct Scope {
+        std::vector<LocalVar> local_vars {};
+    };
+
+    struct Function {
+        size_t             n_local_vars = 0;
+        std::vector<Scope> scope_stack {};
+    };
+
     std::list<Token>      tokens;
     IR                    ir;
     size_t                current_function_id;
     std::vector<Function> functions;
 
-    Function& current_function() { return functions.at(current_function_id); }
+    // parsing
+    void statements(int scope_level = 0);
+    bool statement();
+    void get_local_variable(std::string const& identifier, Token const& t);
+    void declare_local_variable(std::string const& identifier);
+    void assign_local_variable(std::string const& identifier, Token const& t);
+    void variable(std::string const& identifier);
+    void expr();
+    void return_();
+
+    // scope/function management
+    void push_scope();
+    void pop_scope();
+    void end_function();
+
+    // token management
+    [[nodiscard]] Token peek_token() const;
+    Token ingest_token();
+    void expect_symbol(std::string const& symbol);
+
+    // utils
+    [[nodiscard]] std::optional<int32_t> find_local_variable(std::string const& identifier) const;
+    [[nodiscard]] Function& current_function() { return functions.at(current_function_id); }
+    [[nodiscard]] Function const& current_function() const { return functions.at(current_function_id); }
+
+    template <typename... Args> void add_op(Args... args);
 };
 
-static void expr(Context& ctx);
-static bool statement(Context& ctx);
+//
+// PARSER
+//
 
-static Token peek_token(Context& ctx)
+IR Parser::parse()
 {
-    return ctx.tokens.front();
+    statements();
+    end_function();
+
+    if (!tokens.empty())
+        throw CompilationError("Additional text in the end of the file", 0, 0);
+
+    return ir;
 }
 
-static Token ingest_token(Context& ctx)
-{
-    Token t = std::move(ctx.tokens.front());
-    ctx.tokens.pop_front();
-    return t;
-}
-
-static void expect_symbol(Context& ctx, std::string const& symbol)
-{
-    Token t = ingest_token(ctx);
-    if (!H<Symbol>(t.token) || std::get<Symbol>(t.token).symbol != symbol)
-        throw CompilationError("Expected '" + symbol + "'", t.line, t.column);
-}
-
-template <typename... Args>
-static void add_op(Context& ctx, Args... args)
-{
-    ctx.ir.functions.at(ctx.current_function_id).instructions.emplace_back(args...);
-}
-
-static void return_(Context& ctx)
-{
-    expr(ctx);
-    expect_symbol(ctx, ";");
-    add_op(ctx, Operation::Return);
-}
-
-/*
-static void function(Context& ctx)
-{
-    expect_symbol(ctx, "(");
-    // TODO - function parameters
-    expect_symbol(ctx, ")");
-    expect_symbol(ctx, "{");
-    statement(ctx);
-    expect_symbol(ctx, "}");
-}
-*/
-
-static void get_local_variable(std::string const& identifier, Context& ctx, Token const& t)
-{
-    auto const& scopes = ctx.current_function().scope_stack;
-    for (auto const& scope : scopes | std::views::reverse) {
-        for (auto const& local_var: scope.local_vars) {
-            if (local_var.name == identifier) {
-                add_op(ctx, Operation::GetLocal, (int32_t) local_var.idx);
-                return;
-            }
-        }
-    }
-
-    throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
-}
-
-static void declare_local_variable(std::string const& identifier, Context& ctx)
-{
-    expect_symbol(ctx, ":=");
-    expr(ctx);
-    expect_symbol(ctx, ";");
-    ctx.current_function().scope_stack.back().local_vars.push_back({
-        .name = identifier,
-        .idx = ctx.current_function().n_local_vars++,
-    });
-    add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.current_function_id).add_variable(identifier));
-}
-
-static void expr(Context& ctx)
-{
-    Token t = ingest_token(ctx);
-    if (auto *i = std::get_if<Integer>(&t.token)) {
-        add_op(ctx, Operation::PushInt, i->value);
-    } else if (auto *id = std::get_if<Identifier>(&t.token)) {
-        get_local_variable(id->identifier, ctx, t);
-    } else {
-        throw CompilationError("Invalid expression", t.line, t.column);
-    }
-}
-
-static bool statement(Context& ctx)
-{
-    Token t = ingest_token(ctx);
-
-    if (auto *id = std::get_if<Identifier>(&t.token)) {
-        if (id->identifier == "return")
-            return_(ctx);
-        else
-            declare_local_variable(id->identifier, ctx);
-
-    } else if (H<EOF_>(t.token)) {
-        return true;
-
-    } else {
-        throw CompilationError("Invalid statement", t.line, t.column);
-    }
-
-    return false;
-}
-
-static void push_scope(Context& ctx)
-{
-    ctx.current_function().scope_stack.emplace_back();
-}
-
-static void pop_scope(Context& ctx)
-{
-    ctx.current_function().scope_stack.pop_back();
-}
-
-static void statements(Context& ctx, int scope_level = 0)
+void Parser::statements(int scope_level)
 {
     for (;;) {
-        Token t = peek_token(ctx);
+        Token t = peek_token();
 
         // open/close brackes
-        if (auto *s = std::get_if<Symbol>(&t.token)) {
-            if (s->symbol == "{") {
-                ingest_token(ctx);
-                push_scope(ctx);
-                statements(ctx, scope_level + 1);
-            } else if (s->symbol == "}") {
-                ingest_token(ctx);
-                if (scope_level == 0)
-                    throw CompilationError("Unexpected '}' in statement", t.line, t.column);
-                pop_scope(ctx);
-                return;
-            }
+        if (t.is_symbol("{")) {
+            ingest_token();
+            push_scope();
+            statements(scope_level + 1);
+        } else if (t.is_symbol("}")) {
+            ingest_token();
+            if (scope_level == 0)
+                throw CompilationError("Unexpected '}' in statement", t.line, t.column);
+            pop_scope();
+            return;
         }
 
         // normal statement
-        if (statement(ctx))
+        if (statement())
             break;
     }
 }
 
-static void end_function(Context& ctx)
+void Parser::return_()
 {
-    add_op(ctx, Operation::ReturnNil);
+    expr();
+    expect_symbol(";");
+    add_op(Operation::Return);
 }
+
+void Parser::get_local_variable(std::string const& identifier, Token const& t)
+{
+    if (auto o_idx = find_local_variable(identifier); o_idx)
+        add_op(Operation::GetLocal, *o_idx);
+    else
+        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
+}
+
+void Parser::declare_local_variable(std::string const& identifier)
+{
+    expr();
+    expect_symbol(";");
+    current_function().scope_stack.back().local_vars.push_back({
+            .name = identifier,
+            .idx = current_function().n_local_vars++,
+    });
+    add_op(Operation::SetLocal, (int32_t) ir.functions.at(current_function_id).add_variable(identifier));
+}
+
+void Parser::assign_local_variable(std::string const& identifier, Token const& t)
+{
+    expr();
+    expect_symbol(";");
+
+    if (auto o_idx = find_local_variable(identifier); o_idx)
+        add_op(Operation::SetLocal, *o_idx);
+    else
+        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
+}
+
+void Parser::variable(std::string const& identifier)
+{
+    Token t = ingest_token();
+    if (t.is_symbol(":="))
+        declare_local_variable(identifier);
+    else if (t.is_symbol("="))
+        assign_local_variable(identifier, t);
+    else
+        throw CompilationError("Expected ':=' or '='", t.line, t.column);
+}
+
+void Parser::expr()
+{
+    Token t = ingest_token();
+    if (auto o_int = t.integer(); o_int)
+        add_op(Operation::PushInt, *o_int);
+    else if (auto o_id = t.identifier(); o_id)
+        get_local_variable(*o_id, t);
+    else
+        throw CompilationError("Invalid expression", t.line, t.column);
+}
+
+bool Parser::statement()
+{
+    Token t = ingest_token();
+
+    if (t.is_identifier("return"))
+        return_();
+    else if (auto o_id = t.identifier(); o_id)  // any other identifier
+        variable(*o_id);
+    else if (t.is_eof())
+        return true;
+    else
+        throw CompilationError("Invalid statement", t.line, t.column);
+
+    return false;
+}
+
+//
+// UTILS
+//
+
+template <typename... Args>
+void Parser::add_op(Args... args)
+{
+    ir.functions.at(current_function_id).instructions.emplace_back(args...);
+}
+
+std::optional<int32_t> Parser::find_local_variable(std::string const& identifier) const
+{
+    auto const& scopes = current_function().scope_stack;
+    for (auto const& scope : scopes | std::views::reverse) {
+        for (auto const& local_var: scope.local_vars) {
+            if (local_var.name == identifier) {
+                return (int32_t) local_var.idx;
+            }
+        }
+    }
+
+    return {};
+}
+
+//
+// SCOPE/FUNCTION MANAGEMENT
+//
+
+void Parser::push_scope()
+{
+    current_function().scope_stack.emplace_back();
+}
+
+void Parser::pop_scope()
+{
+    current_function().scope_stack.pop_back();
+}
+
+
+void Parser::end_function()
+{
+    add_op(Operation::ReturnNil);
+}
+
+//
+// TOKEN MANAGEMENT
+//
+
+Token Parser::peek_token() const
+{
+    return tokens.front();
+}
+
+Token Parser::ingest_token()
+{
+    Token t = std::move(tokens.front());
+    tokens.pop_front();
+    return t;
+}
+
+void Parser::expect_symbol(std::string const& symbol)
+{
+    Token t = ingest_token();
+    if (!t.is_symbol(symbol))
+        throw CompilationError("Expected '" + symbol + "'", t.line, t.column);
+}
+
+
+//
+// PUBLIC FUNCTION
+//
 
 IR parse(std::vector<Token> const& tks)
 {
-    Context ctx = {
-        .tokens = { tks.begin(), tks.end() },
-        .ir = { .functions = { {} } },
-        .current_function_id = 0,
-        .functions = { Function { .n_local_vars = 0, .scope_stack = { {} } } },
-    };
-
-    statements(ctx);
-    end_function(ctx);
-
-    if (!ctx.tokens.empty())
-        throw CompilationError("Additional text in the end of the file", 0, 0);
-
-    return ctx.ir;
+    return Parser(tks).parse();
 }
 
 }

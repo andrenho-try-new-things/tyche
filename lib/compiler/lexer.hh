@@ -86,6 +86,13 @@ struct Token {
 
     bool operator==(Token const& other) const { return token == other.token; }
 
+    [[nodiscard]] bool is_symbol(std::string const& symbol) const { auto const* s = std::get_if<Symbol>(&token); return s && s->symbol == symbol; }
+    [[nodiscard]] bool is_identifier(std::string const& identifier) const { auto const* s = std::get_if<Identifier>(&token); return s && s->identifier == identifier; }
+    [[nodiscard]] bool is_eof() const { return std::holds_alternative<EOF_>(token); }
+
+    [[nodiscard]] std::optional<std::string> identifier() const { auto const* s = std::get_if<Identifier>(&token); return s ? s->identifier : std::optional<std::string>{}; }
+    [[nodiscard]] std::optional<int32_t>     integer() const { auto const* s = std::get_if<Integer>(&token); return s ? s->value : std::optional<int32_t>{}; }
+
     friend std::ostream& operator<<(std::ostream& os, Token const& t) {
         std::visit([&os](auto const& v) { os << v; }, t.token);
         return os;

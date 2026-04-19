@@ -117,6 +117,7 @@ TEST(VM, Scopes) {
 
 TEST(VM, VariableAssignment) {
     vm_test("a := 12; a = 13; return a;", 13);
+    vm_test("a := 12; { a := 0; a = 13; } return a;", 12);
 }
 
 /*
