@@ -199,9 +199,9 @@ IR parse(std::vector<Token> const& tks)
 {
     Context ctx = {
         .tokens = { tks.begin(), tks.end() },
-        .ir = { .functions = { { {} } } },
+        .ir = { .functions = { {} } },
         .current_function_id = 0,
-        .functions = { {} },
+        .functions = { Function { .n_local_vars = 0, .scope_stack = { {} } } },
     };
 
     statements(ctx);
