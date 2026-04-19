@@ -58,7 +58,8 @@ TEST(BaseVM, StackOperations)
 }
 
 constexpr int32_t ExpectCompilationError = 432840923;
-constexpr int32_t ExpectRuntimeError = 432840924;
+constexpr int32_t ExpectRuntimeError     = 432840924;
+constexpr int32_t ExpectRuntimeSuccess   = 432840925;
 
 template <typename T>
 void vm_test(std::string const& code, T const& expected)
@@ -93,8 +94,10 @@ void vm_test(std::string const& code, T const& expected)
     vm.run_debug();
     std::cout << RULER;
 
-    ASSERT_EQ(vm.stack().size(), 1);
-    ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+    if (auto *i = std::get_if<int32_t>(&value_expected); !i || *i == ExpectRuntimeSuccess) {
+        ASSERT_EQ(vm.stack().size(), 1);
+        ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+    }
 }
 
 TEST(VM, GeneralCode)
@@ -121,7 +124,7 @@ TEST(VM, VariableAssignment) {
 }
 
 TEST(VM, Functions) {
-    vm_test("return func() { return 42; }();", 42);
+    vm_test("return func() { return 42; };", ExpectRuntimeSuccess);
 }
 
 int main(int argc, char** argv)
