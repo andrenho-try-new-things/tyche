@@ -117,8 +117,10 @@ static void assign_new_local_variable(std::string const& identifier, Context& ct
     expect_symbol(ctx, ":=");
     expr(ctx);
     expect_symbol(ctx, ";");
-    auto& n_local_vars = ++ctx.current_function().n_local_vars;
-    ctx.current_function().scope_stack.back().local_vars.push_back({ .name = identifier, .idx = n_local_vars });
+    ctx.current_function().scope_stack.back().local_vars.push_back({
+        .name = identifier,
+        .idx = ctx.current_function().n_local_vars++,
+    });
     add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.current_function_id).add_variable(identifier));
 }
 
