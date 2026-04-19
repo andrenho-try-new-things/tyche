@@ -8,7 +8,9 @@ using namespace vm;
 
 /* Grammar:
 
-<statements> ::= <statement> | <statement> <statements>
+<statements> ::= <statement>
+             |   <statement> <statements>
+             |   "{" <statements> "}"
 
 <statement>  ::= "return" <expr> ";"
              |   IDENTIFIER ":=" <expr> ";"
