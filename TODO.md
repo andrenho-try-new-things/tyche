@@ -1,6 +1,6 @@
 - [x] Initial setup
 - [x] Local variables
-  - [x] Add optional debugging info - set_local_variable name
+  - [x] Add optional debugging info - assign_new_local_variable name
   - [x] Retrieve variables
 - [ ] Functions
   - [ ] Local function variables

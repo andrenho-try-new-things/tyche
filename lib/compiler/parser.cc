@@ -1,6 +1,7 @@
 #include "parser.hh"
 
 #include <list>
+#include <stack>
 
 #include "exceptions.hh"
 
@@ -26,10 +27,27 @@ using namespace vm;
 
 namespace compiler {
 
+struct LocalVar {
+    std::string name;
+    size_t      idx;
+};
+
+struct Scope {
+    std::vector<LocalVar> local_vars {};
+};
+
+struct Function {
+    size_t             n_local_vars = 0;
+    std::vector<Scope> scope_stack {};
+};
+
 struct Context {
-    std::list<Token> tokens;
-    IR               ir;
-    size_t           function_id;
+    std::list<Token>      tokens;
+    IR                    ir;
+    size_t                current_function_id;
+    std::vector<Function> functions;
+
+    Function& current_function() { return functions.at(current_function_id); }
 };
 
 static void expr(Context& ctx);
@@ -57,7 +75,7 @@ static void expect_symbol(Context& ctx, std::string const& symbol)
 template <typename... Args>
 static void add_op(Context& ctx, Args... args)
 {
-    ctx.ir.functions.at(ctx.function_id).instructions.emplace_back(args...);
+    ctx.ir.functions.at(ctx.current_function_id).instructions.emplace_back(args...);
 }
 
 static void return_(Context& ctx)
@@ -81,20 +99,27 @@ static void function(Context& ctx)
 
 static void get_local_variable(std::string const& identifier, Context& ctx, Token const& t)
 {
-    auto const& vars = ctx.ir.functions.at(ctx.function_id).local_vars;
-    auto it = vars.find(identifier);
-    if (it == vars.end())
-        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
-    else
-        add_op(ctx, Operation::GetLocal, (int32_t) it->second.index);
+    auto const& scopes = ctx.current_function().scope_stack;
+    for (auto const& scope : scopes | std::views::reverse) {
+        for (auto const& local_var: scope.local_vars) {
+            if (local_var.name == identifier) {
+                add_op(ctx, Operation::GetLocal, (int32_t) local_var.idx);
+                return;
+            }
+        }
+    }
+
+    throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
 }
 
-static void set_local_variable(std::string const& identifier, Context& ctx)
+static void assign_new_local_variable(std::string const& identifier, Context& ctx)
 {
     expect_symbol(ctx, ":=");
     expr(ctx);
     expect_symbol(ctx, ";");
-    add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.function_id).add_variable(identifier));
+    auto& n_local_vars = ++ctx.current_function().n_local_vars;
+    ctx.current_function().scope_stack.back().local_vars.push_back({ .name = identifier, .idx = n_local_vars });
+    add_op(ctx, Operation::SetLocal, (int32_t) ctx.ir.functions.at(ctx.current_function_id).add_variable(identifier));
 }
 
 static void expr(Context& ctx)
@@ -117,7 +142,7 @@ static bool statement(Context& ctx)
         if (id->identifier == "return")
             return_(ctx);
         else
-            set_local_variable(id->identifier, ctx);
+            assign_new_local_variable(id->identifier, ctx);
 
     } else if (H<EOF_>(t.token)) {
         return true;
@@ -129,6 +154,16 @@ static bool statement(Context& ctx)
     return false;
 }
 
+static void push_scope(Context& ctx)
+{
+    ctx.current_function().scope_stack.emplace_back();
+}
+
+static void pop_scope(Context& ctx)
+{
+    ctx.current_function().scope_stack.pop_back();
+}
+
 static void statements(Context& ctx, int scope_level = 0)
 {
     for (;;) {
@@ -138,13 +173,13 @@ static void statements(Context& ctx, int scope_level = 0)
         if (auto *s = std::get_if<Symbol>(&t.token)) {
             if (s->symbol == "{") {
                 ingest_token(ctx);
-                // TODO - enter scope
+                push_scope(ctx);
                 statements(ctx, scope_level + 1);
             } else if (s->symbol == "}") {
                 ingest_token(ctx);
                 if (scope_level == 0)
                     throw CompilationError("Unexpected '}' in statement", t.line, t.column);
-                // TODO - exit scope
+                pop_scope(ctx);
                 return;
             }
         }
@@ -164,8 +199,9 @@ IR parse(std::vector<Token> const& tks)
 {
     Context ctx = {
         .tokens = { tks.begin(), tks.end() },
-        .ir = { .functions = { {} } },
-        .function_id = 0,
+        .ir = { .functions = { { {} } } },
+        .current_function_id = 0,
+        .functions = { {} },
     };
 
     statements(ctx);
