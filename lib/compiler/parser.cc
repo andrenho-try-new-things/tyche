@@ -28,10 +28,12 @@ namespace compiler {
 class Parser {
 public:
     explicit Parser(std::vector<Token> const& tks)
-        : tokens({ tks.begin(), tks.end() }),
-          ir({ .functions = { {} } }),
-          current_function_id(0),
-          functions({ Function { .n_local_vars = 0, .scope_stack = { {} } } }) {}
+        :tokens_({tks.begin(), tks.end() }),
+         ir_({ .functions = {{} } }),
+         current_function_id_(0),
+         functions_({Function { .n_local_vars = 0, .scope_stack = {{} } } }),
+         latest_token_(Token(Integer {0}, 0, 0))
+     {}
 
     IR parse();
 
@@ -50,17 +52,18 @@ private:
         std::vector<Scope> scope_stack {};
     };
 
-    std::list<Token>      tokens;
-    IR                    ir;
-    size_t                current_function_id;
-    std::vector<Function> functions;
+    std::list<Token>      tokens_;
+    IR                    ir_;
+    size_t                current_function_id_;
+    std::vector<Function> functions_;
+    mutable Token         latest_token_;
 
     // parsing
     void statements(int scope_level = 0);
     bool statement();
-    void get_local_variable(std::string const& identifier, Token const& t);
+    void get_local_variable(std::string const& identifier);
     void declare_local_variable(std::string const& identifier);
-    void assign_local_variable(std::string const& identifier, Token const& t);
+    void assign_local_variable(std::string const& identifier);
     void variable(std::string const& identifier);
     void expr();
     void return_();
@@ -77,8 +80,8 @@ private:
 
     // utils
     [[nodiscard]] std::optional<int32_t> find_local_variable(std::string const& identifier) const;
-    [[nodiscard]] Function& current_function() { return functions.at(current_function_id); }
-    [[nodiscard]] Function const& current_function() const { return functions.at(current_function_id); }
+    [[nodiscard]] Function& current_function() { return functions_.at(current_function_id_); }
+    [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id_); }
 
     template <typename... Args> void add_op(Args... args);
 };
@@ -92,10 +95,10 @@ IR Parser::parse()
     statements();
     end_function();
 
-    if (!tokens.empty())
+    if (!tokens_.empty())
         throw CompilationError("Additional text in the end of the file", 0, 0);
 
-    return ir;
+    return ir_;
 }
 
 void Parser::statements(int scope_level)
@@ -129,12 +132,12 @@ void Parser::return_()
     add_op(Operation::Return);
 }
 
-void Parser::get_local_variable(std::string const& identifier, Token const& t)
+void Parser::get_local_variable(std::string const& identifier)
 {
     if (auto o_idx = find_local_variable(identifier); o_idx)
         add_op(Operation::GetLocal, *o_idx);
     else
-        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
+        throw CompilationError("Could not find local variable '" + identifier + "'", latest_token_.line, latest_token_.column);
 }
 
 void Parser::declare_local_variable(std::string const& identifier)
@@ -145,10 +148,10 @@ void Parser::declare_local_variable(std::string const& identifier)
             .name = identifier,
             .idx = current_function().n_local_vars++,
     });
-    add_op(Operation::SetLocal, (int32_t) ir.functions.at(current_function_id).add_variable(identifier));
+    add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id_).add_variable(identifier));
 }
 
-void Parser::assign_local_variable(std::string const& identifier, Token const& t)
+void Parser::assign_local_variable(std::string const& identifier)
 {
     expr();
     expect_symbol(";");
@@ -156,7 +159,7 @@ void Parser::assign_local_variable(std::string const& identifier, Token const& t
     if (auto o_idx = find_local_variable(identifier); o_idx)
         add_op(Operation::SetLocal, *o_idx);
     else
-        throw CompilationError("Could not find local variable '" + identifier + "'", t.line, t.column);
+        throw CompilationError("Could not find local variable '" + identifier + "'", latest_token_.line, latest_token_.column);
 }
 
 void Parser::variable(std::string const& identifier)
@@ -165,7 +168,7 @@ void Parser::variable(std::string const& identifier)
     if (t.is_symbol(":="))
         declare_local_variable(identifier);
     else if (t.is_symbol("="))
-        assign_local_variable(identifier, t);
+        assign_local_variable(identifier);
     else
         throw CompilationError("Expected ':=' or '='", t.line, t.column);
 }
@@ -175,8 +178,8 @@ void Parser::expr()
     Token t = ingest_token();
     if (auto o_int = t.integer(); o_int)
         add_op(Operation::PushInt, *o_int);
-    else if (auto o_id = t.identifier(); o_id)
-        get_local_variable(*o_id, t);
+    else if (auto o_id = t.identifier(); o_id)   // any other identifier
+        get_local_variable(*o_id);
     else
         throw CompilationError("Invalid expression", t.line, t.column);
 }
@@ -204,7 +207,7 @@ bool Parser::statement()
 template <typename... Args>
 void Parser::add_op(Args... args)
 {
-    ir.functions.at(current_function_id).instructions.emplace_back(args...);
+    ir_.functions.at(current_function_id_).instructions.emplace_back(args...);
 }
 
 std::optional<int32_t> Parser::find_local_variable(std::string const& identifier) const
@@ -247,13 +250,15 @@ void Parser::end_function()
 
 Token Parser::peek_token() const
 {
-    return tokens.front();
+    latest_token_ = tokens_.front();
+    return tokens_.front();
 }
 
 Token Parser::ingest_token()
 {
-    Token t = std::move(tokens.front());
-    tokens.pop_front();
+    Token t = std::move(tokens_.front());
+    tokens_.pop_front();
+    latest_token_ = t;
     return t;
 }
 

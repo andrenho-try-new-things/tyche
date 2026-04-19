@@ -120,11 +120,9 @@ TEST(VM, VariableAssignment) {
     vm_test("a := 12; { a := 0; a = 13; } return a;", 12);
 }
 
-/*
 TEST(VM, Functions) {
     vm_test("return func() { return 42; }();", 42);
 }
- */
 
 int main(int argc, char** argv)
 {

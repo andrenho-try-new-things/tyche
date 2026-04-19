@@ -5,7 +5,7 @@
 - [ ] Functions
   - [ ] Local function variables
   - [ ] Function parameters
-  - [ ] Native functions
+  - [ ] Native functions_
 - [ ] Control flow
 - [ ] Basic types
   - [ ] Boolean
