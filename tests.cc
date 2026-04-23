@@ -94,7 +94,7 @@ void vm_test(std::string const& code, T const& expected)
     vm.run_debug();
     std::cout << RULER;
 
-    if (auto *i = std::get_if<int32_t>(&value_expected); !i || *i == ExpectRuntimeSuccess) {
+    if (auto *i = std::get_if<int32_t>(&value_expected); !i || *i != ExpectRuntimeSuccess) {
         ASSERT_EQ(vm.stack().size(), 1);
         ASSERT_EQ(vm.stack().back(), vm::Value(expected));
     }
