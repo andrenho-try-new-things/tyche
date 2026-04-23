@@ -30,7 +30,7 @@ public:
     explicit Parser(std::vector<Token> const& tks)
         :tokens_({tks.begin(), tks.end() }),
          ir_({ .functions = {{} } }),
-         current_function_id_(0),
+         function_id_stack_({ 0 }),
          functions_({Function { .n_local_vars = 0, .scope_stack = {{} } } }),
          latest_token_(Token(Integer {0}, 0, 0))
      {}
@@ -54,7 +54,7 @@ private:
 
     std::list<Token>      tokens_;
     IR                    ir_;
-    size_t                current_function_id_;
+    std::stack<size_t>    function_id_stack_;
     std::vector<Function> functions_;
     mutable Token         latest_token_;
 
@@ -72,7 +72,8 @@ private:
     // scope/function management
     void push_scope();
     void pop_scope();
-    void end_function();
+    size_t start_function();
+    void   end_function();
 
     // token management
     [[nodiscard]] Token peek_token() const;
@@ -81,8 +82,9 @@ private:
 
     // utils
     [[nodiscard]] std::optional<int32_t> find_local_variable(std::string const& identifier) const;
-    [[nodiscard]] Function& current_function() { return functions_.at(current_function_id_); }
-    [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id_); }
+    [[nodiscard]] Function& current_function() { return functions_.at(current_function_id()); }
+    [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id()); }
+    [[nodiscard]] size_t current_function_id() const { return function_id_stack_.top(); }
 
     template <typename... Args> void add_op(Args... args);
 };
@@ -149,7 +151,7 @@ void Parser::declare_local_variable(std::string const& identifier)
             .name = identifier,
             .idx = current_function().n_local_vars++,
     });
-    add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id_).add_variable(identifier));
+    add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id()).add_variable(identifier));
 }
 
 void Parser::assign_local_variable(std::string const& identifier)
@@ -208,8 +210,11 @@ void Parser::function()
     expect_symbol("(");
     // TODO - function parameters
     expect_symbol(")");
-    expect_symbol("{", false);
-    statements();
+    start_function();
+    push_scope();
+    expect_symbol("{");
+    statements(1);       // scope level is 1 because we already ingested the "{"
+    end_function();
 }
 
 //
@@ -219,7 +224,7 @@ void Parser::function()
 template <typename... Args>
 void Parser::add_op(Args... args)
 {
-    ir_.functions.at(current_function_id_).instructions.emplace_back(args...);
+    ir_.functions.at(current_function_id()).instructions.emplace_back(args...);
 }
 
 std::optional<int32_t> Parser::find_local_variable(std::string const& identifier) const
@@ -250,10 +255,19 @@ void Parser::pop_scope()
     current_function().scope_stack.pop_back();
 }
 
+size_t Parser::start_function()
+{
+    size_t id = functions_.size();
+    functions_.emplace_back();
+    function_id_stack_.push(id);
+    ir_.functions.emplace_back();
+    return id;
+}
 
 void Parser::end_function()
 {
     add_op(Operation::ReturnNil);
+    function_id_stack_.pop();
 }
 
 //

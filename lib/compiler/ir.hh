@@ -17,8 +17,8 @@ struct IR {
     };
 
     struct Function {
-        std::vector<vm::Instruction>              instructions;
-        std::vector<Variable>                     local_vars;
+        std::vector<vm::Instruction> instructions {};
+        std::vector<Variable>        local_vars {};
 
         size_t add_variable(std::string const& var_name) {
             local_vars.push_back({ var_name });
