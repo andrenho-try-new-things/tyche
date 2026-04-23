@@ -20,13 +20,14 @@ private:
     struct Function {
         FunctionId         id;
         std::vector<Value> vars;
+        Location           return_loc;
     };
     std::stack<Function> function_;
 
     bool step();
     bool step_debug();
 
-    void enter_function(FunctionId f_id);
+    void enter_function(FunctionId f_id, size_t return_pc);
     void exit_function();
 };
 

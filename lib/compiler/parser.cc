@@ -89,6 +89,7 @@ private:
     [[nodiscard]] size_t current_function_id() const { return function_id_stack_.top(); }
 
     template <typename... Args> void add_op(Args... args);
+    void add_op(Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
 };
 
 //
@@ -224,11 +225,12 @@ void Parser::function()
     expect_symbol("(");
     // TODO - function parameters
     expect_symbol(")");
-    start_function();
+    size_t function_id = start_function();
     push_scope();
     expect_symbol("{");
     statements(1);       // scope level is 1 because we already ingested the "{"
     end_function();
+    add_op(Operation::PushFunction, function_id);
 }
 
 //

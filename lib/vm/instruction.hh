@@ -6,7 +6,7 @@
 namespace vm {
 
 enum class Operation : uint8_t {
-    PushNil, PushInt, Pop,
+    PushNil, PushInt, PushFunction, Pop,
     Return, ReturnNil,
     GetLocal, SetLocal,
     Call
@@ -22,15 +22,16 @@ struct Instruction {
 
     friend std::ostream& operator<<(std::ostream& os, Instruction const& i) {
         switch (i.operation) {
-            case Operation::PushNil:    os << "PUSHNIL"; break;
-            case Operation::PushInt:    os << "PUSHINT " << std::get<int32_t>(i.operand1); break;
-            case Operation::Pop:        os << "POP"; break;
-            case Operation::Return:     os << "RET"; break;
-            case Operation::ReturnNil:  os << "RETNIL"; break;
-            case Operation::SetLocal:   os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
-            case Operation::GetLocal:   os << "GETLOCAL " << std::get<int32_t>(i.operand1); break;
-            case Operation::Call:       os << "CALL " << std::get<int32_t>(i.operand1); break;
-            default:                    os << "???"; break;
+            case Operation::PushNil:        os << "PUSHNIL"; break;
+            case Operation::PushInt:        os << "PUSHINT " << std::get<int32_t>(i.operand1); break;
+            case Operation::PushFunction:   os << "PUSHFUNC @" << std::get<int32_t>(i.operand1); break;
+            case Operation::Pop:            os << "POP"; break;
+            case Operation::Return:         os << "RET"; break;
+            case Operation::ReturnNil:      os << "RETNIL"; break;
+            case Operation::SetLocal:       os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
+            case Operation::GetLocal:       os << "GETLOCAL " << std::get<int32_t>(i.operand1); break;
+            case Operation::Call:           os << "CALL " << std::get<int32_t>(i.operand1); break;
+            default:                        os << "???"; break;
         }
         return os;
     }
