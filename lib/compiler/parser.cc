@@ -68,6 +68,7 @@ private:
     void expr();
     void return_();
     void function();
+    void function_call();
 
     // scope/function management
     void push_scope();
@@ -77,8 +78,9 @@ private:
 
     // token management
     [[nodiscard]] Token peek_token() const;
+    [[nodiscard]] bool peek_symbol(std::string const& symbol) const;
     Token ingest_token();
-    void expect_symbol(std::string const& symbol, bool ingest=true);
+    void expect_symbol(std::string const& symbol);
 
     // utils
     [[nodiscard]] std::optional<int32_t> find_local_variable(std::string const& identifier) const;
@@ -187,6 +189,18 @@ void Parser::expr()
         get_local_variable(*o_id);
     else
         throw CompilationError("Invalid expression", t.line, t.column);
+
+    if (peek_symbol("(")) {
+        function_call();
+    }
+}
+
+void Parser::function_call()
+{
+    expect_symbol("(");
+    // TODO - parse parameters
+    expect_symbol(")");
+    add_op(Operation::Call, 0);
 }
 
 bool Parser::statement()
@@ -288,9 +302,14 @@ Token Parser::ingest_token()
     return t;
 }
 
-void Parser::expect_symbol(std::string const& symbol, bool ingest)
+bool Parser::peek_symbol(std::string const& symbol) const
 {
-    Token t = ingest ? ingest_token() : peek_token();
+    return peek_token().is_symbol(symbol);
+}
+
+void Parser::expect_symbol(std::string const& symbol)
+{
+    Token t = ingest_token();
     if (!t.is_symbol(symbol))
         throw CompilationError("Expected '" + symbol + "'", t.line, t.column);
 }

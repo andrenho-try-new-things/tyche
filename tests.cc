@@ -124,7 +124,8 @@ TEST(VM, VariableAssignment) {
 }
 
 TEST(VM, Functions) {
-    vm_test("return func() { return 42; };", ExpectRuntimeSuccess);
+    // vm_test("return func() { return 42; };", ExpectRuntimeSuccess);
+    vm_test("return func() { return 42; }();", 42);
 }
 
 int main(int argc, char** argv)
