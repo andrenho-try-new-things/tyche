@@ -79,6 +79,7 @@ add_library(lib${PROJECT_NAME} STATIC
         lib/compiler/linker.hh
         lib/compiler/compiler.cc
         lib/compiler/compiler.hh
+        lib/compiler/parser_priv.hh
 )
 
 target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})
