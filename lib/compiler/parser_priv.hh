@@ -36,6 +36,7 @@ private:
 
     struct Function {
         size_t             n_local_vars = 0;
+        size_t             n_parameters = 0;
         std::vector<Scope> scope_stack {};
     };
 
@@ -46,16 +47,17 @@ private:
     mutable Token         latest_token_;
 
     // parsing
-    void statements(int scope_level = 0);
-    bool statement();
-    void get_local_variable(std::string const& identifier);
-    void declare_local_variable(std::string const& identifier);
-    void assign_local_variable(std::string const& identifier);
-    void variable(std::string const& identifier);
-    void expr();
-    void return_();
-    void function();
-    void function_call();
+    void                     statements(int scope_level = 0);
+    bool                     statement();
+    void                     local_variable_retrieval(std::string const& identifier);
+    void                     local_variable_declaration(std::string const& identifier);
+    void                     local_variable_assignment(std::string const& identifier);
+    void                     variable(std::string const& identifier);
+    void                     expr();
+    void                     return_();
+    void                     function();
+    void                     function_call();
+    std::vector<std::string> function_parameters();
 
     // scope/function management
     void push_scope();
@@ -70,6 +72,7 @@ private:
     void expect_symbol(std::string const& symbol);
 
     // utils
+    void add_local_variable(std::string const& identifier);
     [[nodiscard]] std::optional<int32_t> find_local_variable(std::string const& identifier) const;
     [[nodiscard]] Function& current_function() { return functions_.at(current_function_id()); }
     [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id()); }

@@ -68,7 +68,7 @@ void Parser::return_()
     add_op(Operation::Return);
 }
 
-void Parser::get_local_variable(std::string const& identifier)
+void Parser::local_variable_retrieval(std::string const& identifier)
 {
     if (auto o_idx = find_local_variable(identifier); o_idx)
         add_op(Operation::GetLocal, *o_idx);
@@ -76,18 +76,15 @@ void Parser::get_local_variable(std::string const& identifier)
         throw CompilationError("Could not find local variable '" + identifier + "'", latest_token_.line, latest_token_.column);
 }
 
-void Parser::declare_local_variable(std::string const& identifier)
+void Parser::local_variable_declaration(std::string const& identifier)
 {
     expr();
     expect_symbol(";");
-    current_function().scope_stack.back().local_vars.push_back({
-            .name = identifier,
-            .idx = current_function().n_local_vars++,
-    });
+    add_local_variable(identifier);
     add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id()).add_variable(identifier));
 }
 
-void Parser::assign_local_variable(std::string const& identifier)
+void Parser::local_variable_assignment(std::string const& identifier)
 {
     expr();
     expect_symbol(";");
@@ -102,9 +99,9 @@ void Parser::variable(std::string const& identifier)
 {
     Token t = ingest_token();
     if (t.is_symbol(":="))
-        declare_local_variable(identifier);
+        local_variable_declaration(identifier);
     else if (t.is_symbol("="))
-        assign_local_variable(identifier);
+        local_variable_assignment(identifier);
     else
         throw CompilationError("Expected ':=' or '='", t.line, t.column);
 }
@@ -117,7 +114,7 @@ void Parser::expr()
     else if (t.is_identifier("func"))
         function();
     else if (auto o_id = t.identifier(); o_id)   // any other identifier
-        get_local_variable(*o_id);
+        local_variable_retrieval(*o_id);
     else
         throw CompilationError("Invalid expression", t.line, t.column);
 
@@ -129,9 +126,21 @@ void Parser::expr()
 void Parser::function_call()
 {
     expect_symbol("(");
-    // TODO - parse parameters
+
+    size_t n_pars = 0;
+    if (!peek_symbol(")")) {
+        for (;;) {
+            expr();
+            ++n_pars;
+            if (peek_symbol(")"))
+                break;
+            else if (!ingest_token().is_symbol(","))
+                throw CompilationError("On function call, expected ')' or ','", latest_token_.line, latest_token_.column);
+        }
+    }
+
     expect_symbol(")");
-    add_op(Operation::Call, 0);
+    add_op(Operation::Call, n_pars);
 }
 
 bool Parser::statement()
@@ -152,26 +161,51 @@ bool Parser::statement()
 
 void Parser::function()
 {
+    // function parameters
     expect_symbol("(");
+    auto parameters = function_parameters();
 
-    for (;;) {
-        if (peek_symbol(")"))   // end of list
-            break;
-        if (!peek_token().is_identifier())
-            throw CompilationError("Expected identifier or ')' for function parameter", latest_token_.line, latest_token_.column);
-
-        Token t = ingest_token();
-
-    }
-
-    // TODO - function parameters
+    // add function
     expect_symbol(")");
     size_t function_id = start_function();
     push_scope();
+
+    // add parameters as local variables
+    for (auto const& parameter: parameters)
+        add_local_variable(parameter);
+    current_function().n_local_vars += parameters.size();
+    current_function().n_parameters = parameters.size();
+    ir_.functions.back().n_parameters = parameters.size();
+
+    // parse rest of the function
     expect_symbol("{");
     statements(1);       // scope level is 1 because we already ingested the "{"
     end_function();
     add_op(Operation::PushFunction, function_id);
+}
+
+std::vector<std::string> Parser::function_parameters()
+{
+    // function parameters
+    std::vector<std::string> parameters;
+    if (!peek_symbol(")")) {
+        for (;;) {
+            if (!peek_token().is_identifier())
+                throw CompilationError("Expected identifier or ')' for function parameter", latest_token_.line, latest_token_.column);
+
+            Token t = ingest_token();
+            if (!t.is_identifier())
+                throw CompilationError("Expected parameter name", latest_token_.line, latest_token_.column);
+            parameters.push_back(*t.identifier());
+
+            if (peek_symbol(")"))
+                break;
+            else if (!ingest_token().is_symbol(","))
+                throw CompilationError("Expected ')' or ',' in function parameter list.", latest_token_.line, latest_token_.column);
+        }
+    }
+
+    return parameters;
 }
 
 //
@@ -182,6 +216,14 @@ template <typename... Args>
 void Parser::add_op(Args... args)
 {
     ir_.functions.at(current_function_id()).instructions.emplace_back(args...);
+}
+
+void Parser::add_local_variable(std::string const& identifier)
+{
+    current_function().scope_stack.back().local_vars.push_back({
+            .name = identifier,
+            .idx = current_function().n_local_vars++,
+    });
 }
 
 std::optional<int32_t> Parser::find_local_variable(std::string const& identifier) const
