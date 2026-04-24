@@ -135,6 +135,7 @@ TEST(VM, NestedFunctions) {
     vm_test("a := func() { return func() { return 42; }; }; return a;", vm::ValueFunction(1));
     vm_test("a := func() { return func() { return 42; }; }; return a();", vm::ValueFunction(2));
     vm_test("a := func() { return func() { return 42; }; }; return a()();", 42);
+    vm_test("a := func() { return func() { return 42; }; }; b := a(); return b();", 42);
 }
 
 int main(int argc, char** argv)
