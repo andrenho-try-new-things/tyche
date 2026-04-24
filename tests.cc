@@ -123,10 +123,18 @@ TEST(VM, VariableAssignment) {
     vm_test("a := 12; { a := 0; a = 13; } return a;", 12);
 }
 
-TEST(VM, Functions) {
+TEST(VM, SimpleFunctions) {
     vm_test("return func() { return 42; };", vm::ValueFunction(1));
     vm_test("return func() { return 42; }();", 42);
-    // vm_test("a := func() { return 42; }; a();", 42);
+    vm_test("a := func() { return 42; }; return a();", 42);
+    vm_test("a := func() { return 42; }; b := func() { return 24; }; return a();", 42);
+    vm_test("a := func() { return 42; }; b := func() { return 24; }; return b();", 24);
+}
+
+TEST(VM, NestedFunctions) {
+    vm_test("a := func() { return func() { return 42; }; }; return a;", vm::ValueFunction(1));
+    vm_test("a := func() { return func() { return 42; }; }; return a();", vm::ValueFunction(2));
+    vm_test("a := func() { return func() { return 42; }; }; return a()();", 42);
 }
 
 int main(int argc, char** argv)

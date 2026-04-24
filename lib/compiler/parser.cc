@@ -191,7 +191,7 @@ void Parser::expr()
     else
         throw CompilationError("Invalid expression", t.line, t.column);
 
-    if (peek_symbol("(")) {
+    while (peek_symbol("(")) {
         function_call();
     }
 }
