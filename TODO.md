@@ -2,8 +2,8 @@
 - [x] Local variables
   - [x] Add optional debugging info - declare_local_variable name
   - [x] Retrieve variables
-- [ ] Functions
-  - [ ] Local function variables
+- [x] Functions
+  - [x] Local function variables
   - [ ] Function parameters
   - [ ] Native functions_
 - [ ] Control flow

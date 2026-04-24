@@ -138,6 +138,14 @@ TEST(VM, NestedFunctions) {
     vm_test("a := func() { return func() { return 42; }; }; b := a(); return b();", 42);
 }
 
+TEST(VM, LocalVarsInFunctions) {
+    vm_test("a := 42; return func() { a := 12; return a; }();", 12);
+}
+
+TEST(VM, FunctionParameters) {
+    vm_test("return func(a) { return a; }(42);", 42);
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
