@@ -35,6 +35,7 @@ public:
 
     [[nodiscard]] std::optional<NextInstruction> next_instruction(Location const& location) const;
     [[nodiscard]] size_t      n_functions() const;
+    [[nodiscard]] size_t      n_function_parameters(FunctionId f_id) const;
     [[nodiscard]] size_t      n_local_vars(FunctionId f_id) const;
 
     [[nodiscard]] bool        has_debugging_info() const { return has_debugging_info_; }

@@ -20,27 +20,33 @@ bool VM::step()
         throw ExecutionException("Out of code area bounds");
     switch (next->instruction.operation) {
         case Operation::PushNil:
-            push_nil();
+            stack_push(std::monostate());
             break;
         case Operation::PushInt:
-            push_integer(std::get<int32_t>(next->instruction.operand1));
+            stack_push(std::get<int32_t>(next->instruction.operand1));
+            break;
+        case Operation::PushFunction:
+            stack_push(ValueFunction{.id = (size_t) std::get<int32_t>(next->instruction.operand1)});
             break;
         case Operation::Pop:
-            pop();
+            stack_pop();
             break;
         case Operation::Return:
             exit_function();
             return function_.empty();
         case Operation::ReturnNil:
-            push_nil();
+            stack_.emplace_back(std::monostate());
             exit_function();
             return function_.empty();
         case Operation::SetLocal:
-            function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = pop_value();
+            function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = stack_pop();
             break;
         case Operation::GetLocal:
-            push_value(function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)));
+            stack_push(function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)));
             break;
+        case Operation::Call:
+            function_call((size_t) std::get<int32_t>(next->instruction.operand1), next->size);
+            return false;
         default:
             throw ExecutionException("Invalid opcode");
     }
@@ -51,10 +57,11 @@ bool VM::step()
 
 bool VM::step_debug()
 {
-    auto next = bytecode_.next_instruction(loc_);
+    Location loc = loc_;
+    auto next = bytecode_.next_instruction(loc);
     bool b = step();
 
-    std::cout << next->instruction << "  ";
+    std::cout << "(" << loc.function_id << ":" << loc.pc << ") " << next->instruction << "  ";
     if (bytecode_.has_debugging_info()) {
         if (next->instruction.operation == Operation::SetLocal) {
             std::cout << "; " << bytecode_.debug_variable_name(function_.top().id, std::get<int32_t>(next->instruction.operand1))
@@ -71,26 +78,77 @@ bool VM::step_debug()
 
 void VM::run()
 {
-    enter_function(0);
+    enter_function(0, 0, 0);
     while (!step());
 }
 
 void VM::run_debug()
 {
-    enter_function(0);
+    enter_function(0, 0, 0);
     while (!step_debug());
 }
 
-void VM::enter_function(FunctionId f_id)
+void VM::function_call(size_t n_params, size_t instruction_size)
 {
-    Function f = { .id = f_id, .vars = {} };
+    // pop parameters
+    std::vector<Value> parameters;
+    for (size_t i = 0; i < n_params; ++i)
+        parameters.push_back(stack_pop());
+
+    // get function object
+    Value f = stack_pop();
+    auto *function = std::get_if<ValueFunction>(&f);
+    if (!function)
+        throw ExecutionException("Expected function type.");
+
+    // enter function
+    enter_function(function->id, loc_.pc + instruction_size, n_params);
+
+    // pass function parameters as variables
+    for (size_t i = 0; i < n_params; ++i)
+        function_.top().vars.at(i) = parameters.at(n_params - i - 1);
+}
+
+void VM::enter_function(FunctionId f_id, size_t return_pc, size_t n_pars)
+{
+    Function f = {
+        .id = f_id,
+        .vars = {},
+        .return_loc = function_.empty() ? (Location) { 0, 0 } : (Location) { function_.top().id, return_pc }
+    };
     f.vars.resize(bytecode_.n_local_vars(f_id), vm::Value());
     function_.emplace(std::move(f));
+    loc_ = { function_.top().id, 0 };
 }
 
 void VM::exit_function()
 {
+    loc_ = function_.top().return_loc;
     function_.pop();
+}
+
+Value VM::stack_pop()
+{
+    Value v = std::move(stack_.back());
+    stack_.pop_back();
+    return v;
+}
+
+void VM::stack_push(Value const& val)
+{
+    stack_.emplace_back(val);
+}
+
+std::string VM::debug_stack() const
+{
+    if (stack_.empty()) {
+        return "empty";
+    } else {
+        std::string out;
+        for (auto const& item: stack_)
+            out += "[" + std::to_string(item) + "] ";
+        return out;
+    }
 }
 
 }

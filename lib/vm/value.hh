@@ -9,7 +9,13 @@ namespace vm {
 
 using Nil = std::monostate;
 
-using Value = std::variant<Nil, int32_t>;
+struct ValueFunction {
+    size_t id;
+
+    bool operator==(ValueFunction const& rhs) const { return id==rhs.id; }
+};
+
+using Value = std::variant<Nil, int32_t, ValueFunction>;
 
 }
 

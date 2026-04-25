@@ -59,8 +59,6 @@ FetchContent_MakeAvailable(googletest)
 #
 
 add_library(lib${PROJECT_NAME} STATIC
-        lib/vm/basevm.cc
-        lib/vm/basevm.hh
         lib/vm/bytecode.cc
         lib/vm/bytecode.hh
         lib/vm/instruction.hh
@@ -79,6 +77,7 @@ add_library(lib${PROJECT_NAME} STATIC
         lib/compiler/linker.hh
         lib/compiler/compiler.cc
         lib/compiler/compiler.hh
+        lib/compiler/parser_priv.hh
 )
 
 target_compile_options(lib${PROJECT_NAME} PRIVATE ${warnings})

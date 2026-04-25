@@ -7,6 +7,7 @@
 #include "lib/vm/vm.hh"
 #include "lib/compiler/exceptions.hh"
 #include "lib/vm/exception.hh"
+#include "lib/vm/value.hh"
 
 TEST(Lexer, Lexer)
 {
@@ -45,20 +46,9 @@ TEST(Parser, Parser)
     }));
 }
 
-TEST(BaseVM, StackOperations)
-{
-    using namespace vm;
-    vm::BaseVM vm;
-
-    ASSERT_TRUE(vm.stack().empty());
-
-    vm.push_integer(542);
-    ASSERT_EQ(vm.stack().size(), 1);
-    ASSERT_EQ(vm.stack().back(), Value(542));
-}
-
 constexpr int32_t ExpectCompilationError = 432840923;
-constexpr int32_t ExpectRuntimeError = 432840924;
+constexpr int32_t ExpectRuntimeError     = 432840924;
+constexpr int32_t ExpectRuntimeSuccess   = 432840925;
 
 template <typename T>
 void vm_test(std::string const& code, T const& expected)
@@ -93,8 +83,10 @@ void vm_test(std::string const& code, T const& expected)
     vm.run_debug();
     std::cout << RULER;
 
-    ASSERT_EQ(vm.stack().size(), 1);
-    ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+    if (auto *i = std::get_if<int32_t>(&value_expected); !i || *i != ExpectRuntimeSuccess) {
+        ASSERT_EQ(vm.stack().size(), 1);
+        ASSERT_EQ(vm.stack().back(), vm::Value(expected));
+    }
 }
 
 TEST(VM, GeneralCode)
@@ -103,25 +95,57 @@ TEST(VM, GeneralCode)
     vm_test("42;", ExpectCompilationError);
 }
 
-TEST(VM, LocalVariables) {
+TEST(VM, LocalVariables)
+{
     vm_test("a := 52; return a;", 52);
     vm_test("a := 52; b := 13; return a;", 52);
     vm_test("a := 52; b := 13; return b;", 13);
 }
 
-TEST(VM, Scopes) {
+TEST(VM, Scopes)
+{
     vm_test("a := 52; { b := 12; } return a;", 52);
     vm_test("a := 52; { b := 12; } return b;", ExpectCompilationError);
     vm_test("a := 52; { a := 12; } return a;", 52);
 }
 
-TEST(VM, VariableAssignment) {
+TEST(VM, VariableAssignment)
+{
     vm_test("a := 12; a = 13; return a;", 13);
     vm_test("a := 12; { a := 0; a = 13; } return a;", 12);
 }
 
-TEST(VM, Functions) {
+TEST(VM, SimpleFunctions)
+{
+    vm_test("return func() { return 42; };", vm::ValueFunction(1));
     vm_test("return func() { return 42; }();", 42);
+    vm_test("a := func() { return 42; }; return a();", 42);
+    vm_test("a := func() { return 42; }; b := func() { return 24; }; return a();", 42);
+    vm_test("a := func() { return 42; }; b := func() { return 24; }; return b();", 24);
+}
+
+TEST(VM, NestedFunctions)
+{
+    vm_test("a := func() { return func() { return 42; }; }; return a;", vm::ValueFunction(1));
+    vm_test("a := func() { return func() { return 42; }; }; return a();", vm::ValueFunction(2));
+    vm_test("a := func() { return func() { return 42; }; }; return a()();", 42);
+    vm_test("a := func() { return func() { return 42; }; }; b := a(); return b();", 42);
+}
+
+TEST(VM, LocalVarsInFunctions)
+{
+    vm_test("a := 42; return func() { a := 12; return a; }();", 12);
+}
+
+TEST(VM, FunctionParameters)
+{
+    vm_test("return func(a) { return a; }(42);", 42);
+    vm_test("return func(a, b) { return a; }(42, 12);", 42);
+    vm_test("return func(a, b) { return b; }(42, 12);", 12);
+    vm_test("return func(a, b) { c := 91; return b; }(42, 12);", 12);
+    vm_test("return func(a, b) { c := 91; return c; }(42, 12);", 91);
+    vm_test("return func(a, b) { c := 91; { c := 33; } return c; }(42, 12);", 91);
+    vm_test("a := func(b) { return b(); }; return a(func() { return 32; });", 32);  // pass function as parameter
 }
 
 int main(int argc, char** argv)

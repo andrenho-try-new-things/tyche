@@ -1,11 +1,11 @@
 - [x] Initial setup
 - [x] Local variables
-  - [x] Add optional debugging info - declare_local_variable name
+  - [x] Add optional debugging info - local_variable_declaration name
   - [x] Retrieve variables
-- [ ] Functions
-  - [ ] Local function variables
-  - [ ] Function parameters
-  - [ ] Native functions_
+- [x] Functions
+  - [x] Local function variables
+  - [x] Function parameters
+  - [ ] Recursion
 - [ ] Control flow
 - [ ] Basic types
   - [ ] Boolean
@@ -18,6 +18,7 @@
 - [ ] Tables + GC
   - [ ] Metamethods?
   - [ ] Arrays
+- [ ] Native functions
 - [ ] Error handling
 - [ ] Closures
 - [ ] Imports (linker)
