@@ -13,7 +13,11 @@ enum class Operation : uint8_t {
     BranchFalse,
 };
 
-using Operand = std::variant<std::monostate, int32_t>;
+struct Label {
+    size_t instruction_idx;
+};
+
+using Operand = std::variant<std::monostate, int32_t, Label*>;
 
 struct Instruction {
     Operation operation;
@@ -34,6 +38,7 @@ struct Instruction {
             case Operation::SetLocal:       os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::GetLocal:       os << "GETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::Call:           os << "CALL " << std::get<int32_t>(i.operand1); break;
+            case Operation::BranchFalse:    os << "BRANCH_F &" << std::format("{:03x}", std::get<Label*>(i.operand1)->instruction_idx); break;
             default:                        os << "???"; break;
         }
         return os;

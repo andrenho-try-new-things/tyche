@@ -53,6 +53,17 @@ bool VM::step()
         case Operation::Call:
             function_call((size_t) std::get<int32_t>(next->instruction.operand1), next->size);
             return false;
+        case Operation::BranchFalse: {
+            Value v = stack_pop();
+            auto* condition = std::get_if<bool>(&v);
+            if (!condition)
+                throw ExecutionException("Expected boolean");
+            if (!*condition) {
+                loc_.pc = std::get<Label*>(next->instruction.operand1)->instruction_idx;
+                return false;
+            }
+            break;
+        }
         default:
             throw ExecutionException("Invalid opcode");
     }

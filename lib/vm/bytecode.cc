@@ -52,7 +52,7 @@ std::ostream& operator<<(std::ostream& os, Bytecode const& b)
         while (auto next = b.next_instruction({f_id, pc })) {
             if (!next)
                 break;
-            os << "\t" << next->instruction << "\n";
+            os << "  [" << std::format("{:03x}", pc) << "]  " << next->instruction << "\n";
             pc += next->size;
         }
     }

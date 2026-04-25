@@ -7,12 +7,13 @@
 
 #include "../vm/instruction.hh"
 
+#include <list>
+
 namespace compiler {
 
 struct IR {
     struct Variable {
         std::string name;
-
         bool operator==(Variable const& var) const = default;
     };
 
@@ -20,10 +21,25 @@ struct IR {
         std::vector<vm::Instruction> instructions {};
         std::vector<Variable>        local_vars {};
         size_t                       n_parameters = 0;
+        std::list<vm::Label>         labels {};
 
         size_t add_variable(std::string const& var_name) {
             local_vars.push_back({ var_name });
             return local_vars.size() - 1;
+        }
+
+        template <typename... Args>
+        size_t add_instruction(Args... args) {
+            instructions.emplace_back(args...);
+            return instructions.size() - 1;
+        }
+
+        vm::Label* create_label() {
+            return &labels.emplace_back();
+        }
+
+        void set_label(vm::Label* label) {
+            label->instruction_idx = instructions.size();
         }
 
         bool operator==(Function const& rhs) const

@@ -177,10 +177,11 @@ bool Parser::statement()
 void Parser::if_()
 {
     expr();
-    // TODO - add_op(Operation::BranchFalse, 0);
+    auto label = create_label();
+    add_op(Operation::BranchFalse, label);
     expect_symbol("{");
     statements(1);       // scope level is 1 because we already ingested the "{"
-    // TODO - add_label();
+    set_label(label);
 }
 
 void Parser::function()
@@ -242,7 +243,7 @@ std::vector<std::string> Parser::function_parameters()
 template <typename... Args>
 void Parser::add_op(Args... args)
 {
-    ir_.functions.at(current_function_id()).instructions.emplace_back(args...);
+    ir_.functions.at(current_function_id()).add_instruction(args...);
 }
 
 void Parser::add_local_variable(std::string const& identifier)

@@ -79,8 +79,11 @@ private:
     [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id()); }
     [[nodiscard]] size_t current_function_id() const { return function_id_stack_.top(); }
 
+    // IR management
     template <typename... Args> void add_op(Args... args);
-    void add_op(vm::Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
+    void       add_op(vm::Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
+    vm::Label* create_label() { return ir_.functions.at(current_function_id()).create_label(); }
+    void       set_label(vm::Label* idx) { return ir_.functions.at(current_function_id()).set_label(idx); }
 };
 
 }

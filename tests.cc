@@ -157,6 +157,7 @@ TEST(VM, Boolean)
 TEST(VM, FlowConditional)
 {
     vm_test("if true { return 1; } return 2;", 1);
+    vm_test("if false { return 1; } return 2;", 2);
 }
 
 int main(int argc, char** argv)
