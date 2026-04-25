@@ -45,11 +45,11 @@ std::string Bytecode::debug_variable_name(FunctionId f_id, size_t var_idx) const
 std::ostream& operator<<(std::ostream& os, Bytecode const& b)
 {
 
-    for (size_t i = 0; i < b.n_functions(); ++i) {
-        os << ".function " << i << "\n";
+    for (size_t f_id = 0; f_id < b.n_functions(); ++f_id) {
+        os << ".function " << f_id << " (pars: " << b.n_function_parameters(f_id) << ", local vars: " << b.n_local_vars(f_id) << ")\n";
         size_t pc = 0;
 
-        while (auto next = b.next_instruction({ i, pc })) {
+        while (auto next = b.next_instruction({f_id, pc })) {
             if (!next)
                 break;
             os << "\t" << next->instruction << "\n";
@@ -63,6 +63,11 @@ std::ostream& operator<<(std::ostream& os, Bytecode const& b)
 size_t Bytecode::n_local_vars(FunctionId f_id) const
 {
     return ir_.functions.at(f_id).local_vars.size();
+}
+
+size_t Bytecode::n_function_parameters(FunctionId f_id) const
+{
+    return ir_.functions.at(f_id).n_parameters;
 }
 
 }

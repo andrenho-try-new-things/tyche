@@ -170,12 +170,16 @@ void Parser::function()
     size_t function_id = start_function();
     push_scope();
 
-    // add parameters as local variables
+    // add parameters as local variables to parser
     for (auto const& parameter: parameters)
         add_local_variable(parameter);
     current_function().n_local_vars += parameters.size();
     current_function().n_parameters = parameters.size();
+
+    // add parameters as local variables to IR
     ir_.functions.back().n_parameters = parameters.size();
+    for (auto const& parameter: parameters)
+        ir_.functions.back().local_vars.emplace_back(parameter);
 
     // parse rest of the function
     expect_symbol("{");

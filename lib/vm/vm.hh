@@ -37,11 +37,13 @@ private:
     bool step();
     bool step_debug();
 
+    void function_call(size_t n_params, size_t instruction_size);
+
     void enter_function(FunctionId f_id, size_t return_pc, size_t n_parameters);
     void exit_function();
 
-    Value pop_value();
-    void  push_value(Value const& val);
+    Value stack_pop();
+    void  stack_push(Value const& val);
 };
 
 }

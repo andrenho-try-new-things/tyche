@@ -20,16 +20,16 @@ bool VM::step()
         throw ExecutionException("Out of code area bounds");
     switch (next->instruction.operation) {
         case Operation::PushNil:
-            push_value(std::monostate());
+            stack_push(std::monostate());
             break;
         case Operation::PushInt:
-            push_value(std::get<int32_t>(next->instruction.operand1));
+            stack_push(std::get<int32_t>(next->instruction.operand1));
             break;
         case Operation::PushFunction:
-            push_value(ValueFunction { .id = (size_t) std::get<int32_t>(next->instruction.operand1) });
+            stack_push(ValueFunction{.id = (size_t) std::get<int32_t>(next->instruction.operand1)});
             break;
         case Operation::Pop:
-            pop_value();
+            stack_pop();
             break;
         case Operation::Return:
             exit_function();
@@ -39,21 +39,14 @@ bool VM::step()
             exit_function();
             return function_.empty();
         case Operation::SetLocal:
-            function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = pop_value();
+            function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)) = stack_pop();
             break;
         case Operation::GetLocal:
-            push_value(function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)));
+            stack_push(function_.top().vars.at(std::get<int32_t>(next->instruction.operand1)));
             break;
-        case Operation::Call: {
-            Value v = pop_value();
-            if (auto* f = std::get_if<ValueFunction>(&v); f) {
-                enter_function(f->id, loc_.pc + next->size, (size_t) std::get<int32_t>(next->instruction.operand1));
-                return false;
-            } else {
-                throw ExecutionException("Expected function type.");
-            }
-            break;
-        }
+        case Operation::Call:
+            function_call((size_t) std::get<int32_t>(next->instruction.operand1), next->size);
+            return false;
         default:
             throw ExecutionException("Invalid opcode");
     }
@@ -95,6 +88,27 @@ void VM::run_debug()
     while (!step_debug());
 }
 
+void VM::function_call(size_t n_params, size_t instruction_size)
+{
+    // pop parameters
+    std::vector<Value> parameters;
+    for (size_t i = 0; i < n_params; ++i)
+        parameters.push_back(stack_pop());
+
+    // get function object
+    Value f = stack_pop();
+    auto *function = std::get_if<ValueFunction>(&f);
+    if (!function)
+        throw ExecutionException("Expected function type.");
+
+    // enter function
+    enter_function(function->id, loc_.pc + instruction_size, n_params);
+
+    // pass function parameters as variables
+    for (size_t i = 0; i < n_params; ++i)
+        function_.top().vars.at(i) = parameters.at(n_params - i - 1);
+}
+
 void VM::enter_function(FunctionId f_id, size_t return_pc, size_t n_pars)
 {
     Function f = {
@@ -113,14 +127,14 @@ void VM::exit_function()
     function_.pop();
 }
 
-Value VM::pop_value()
+Value VM::stack_pop()
 {
     Value v = std::move(stack_.back());
     stack_.pop_back();
     return v;
 }
 
-void VM::push_value(Value const& val)
+void VM::stack_push(Value const& val)
 {
     stack_.emplace_back(val);
 }
