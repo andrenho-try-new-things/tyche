@@ -69,6 +69,7 @@ private:
     // token management
     [[nodiscard]] Token peek_token() const;
     [[nodiscard]] bool peek_symbol(std::string const& symbol) const;
+    [[nodiscard]] bool peek_identifier(std::string const& symbol) const;
     Token ingest_token();
     void expect_symbol(std::string const& symbol);
 
@@ -83,7 +84,7 @@ private:
     template <typename... Args> void add_op(Args... args);
     void       add_op(vm::Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
     vm::Label* create_label() { return ir_.functions.at(current_function_id()).create_label(); }
-    void       set_label(vm::Label* idx) { return ir_.functions.at(current_function_id()).set_label(idx); }
+    void       set_label(vm::Label* label) { return ir_.functions.at(current_function_id()).set_label(label); }
 };
 
 }

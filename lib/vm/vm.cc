@@ -53,6 +53,9 @@ bool VM::step()
         case Operation::Call:
             function_call((size_t) std::get<int32_t>(next->instruction.operand1), next->size);
             return false;
+        case Operation::Jump:
+            loc_.pc = std::get<int32_t>(next->instruction.operand1);
+            return false;
         case Operation::BranchFalse: {
             Value v = stack_pop();
             auto* condition = std::get_if<bool>(&v);

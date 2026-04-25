@@ -10,7 +10,7 @@ enum class Operation : uint8_t {
     Return, ReturnNil,
     GetLocal, SetLocal,
     Call,
-    BranchFalse,
+    Jump, BranchFalse,
 };
 
 struct Label {
@@ -38,6 +38,7 @@ struct Instruction {
             case Operation::SetLocal:       os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::GetLocal:       os << "GETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::Call:           os << "CALL " << std::get<int32_t>(i.operand1); break;
+            case Operation::Jump:           os << "JUMP &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
             case Operation::BranchFalse:    os << "BRANCH_F &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
             default:                        os << "???"; break;
         }

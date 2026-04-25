@@ -176,12 +176,28 @@ bool Parser::statement()
 
 void Parser::if_()
 {
+    // if
     expr();
-    auto label = create_label();
-    add_op(Operation::BranchFalse, label);
+    auto if_label = create_label();
+    add_op(Operation::BranchFalse, if_label);
     expect_symbol("{");
-    statements(1);       // scope level is 1 because we already ingested the "{"
-    set_label(label);
+    push_scope();
+    statements(1);
+
+    if (!peek_identifier("else")) {
+        set_label(if_label);
+
+    } else {
+        // else
+        ingest_token();
+        auto else_label = create_label();
+        add_op(Operation::Jump, else_label);
+        set_label(if_label);
+        expect_symbol("{");
+        push_scope();
+        statements(1);
+        set_label(else_label);
+    }
 }
 
 void Parser::function()
@@ -318,6 +334,11 @@ Token Parser::ingest_token()
 bool Parser::peek_symbol(std::string const& symbol) const
 {
     return peek_token().is_symbol(symbol);
+}
+
+bool Parser::peek_identifier(const std::string& symbol) const
+{
+    return peek_token().is_identifier(symbol);
 }
 
 void Parser::expect_symbol(std::string const& symbol)
