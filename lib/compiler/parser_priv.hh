@@ -81,10 +81,10 @@ private:
     [[nodiscard]] size_t current_function_id() const { return function_id_stack_.top(); }
 
     // IR management
-    template <typename... Args> void add_op(Args... args);
-    void       add_op(vm::Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
-    vm::Label* create_label() { return ir_.functions.at(current_function_id()).create_label(); }
-    void       set_label(vm::Label* label) { return ir_.functions.at(current_function_id()).set_label(label); }
+    template <typename... Args> void ir_add_op(Args... args);
+    void          ir_add_op(vm::Operation operation, size_t arg) { ir_add_op(operation, (int32_t) arg); }
+    UnresolvedKey ir_create_unknown_key() { return ir_.functions.at(current_function_id()).create_unresolved(); }
+    void          ir_resolve_to_instruction_idx(UnresolvedKey const& key) { ir_.functions.at(current_function_id()).resolve_to_instruction_idx(key); }
 };
 
 }

@@ -156,9 +156,9 @@ TEST(VM, Boolean)
 
 TEST(VM, FlowConditional)
 {
-    // vm_test("if true { return 1; } return 2;", 1);
-    // vm_test("if false { return 1; } return 2;", 2);
-    // vm_test("if true { return 1; } else { return 2; } return 3;", 1);
+    vm_test("if true { return 1; } return 2;", 1);
+    vm_test("if false { return 1; } return 2;", 2);
+    vm_test("if true { return 1; } else { return 2; } return 3;", 1);
     vm_test("if false { return 1; } else { return 2; } return 3;", 2);
 }
 

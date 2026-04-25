@@ -2,6 +2,7 @@
 #define TYCHE_INSTRUCTION_HH
 
 #include <ostream>
+#include "unresolved.hh"
 
 namespace vm {
 
@@ -13,11 +14,7 @@ enum class Operation : uint8_t {
     Jump, BranchFalse,
 };
 
-struct Label {
-    size_t instruction_idx;
-};
-
-using Operand = std::variant<std::monostate, int32_t, Label*>;
+using Operand = std::variant<std::monostate, int32_t, compiler::UnresolvedKey>;
 
 struct Instruction {
     Operation operation;

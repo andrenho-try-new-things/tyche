@@ -21,7 +21,7 @@ struct IR {
         std::vector<vm::Instruction> instructions {};
         std::vector<Variable>        local_vars {};
         size_t                       n_parameters = 0;
-        std::list<vm::Label>         labels {};
+        UnresolvedMap                unresolved_map;
 
         size_t add_variable(std::string const& var_name) {
             local_vars.push_back({ var_name });
@@ -34,12 +34,14 @@ struct IR {
             return instructions.size() - 1;
         }
 
-        vm::Label* create_label() {
-            return &labels.emplace_back();
+        UnresolvedKey create_unresolved() {
+            UnresolvedKey key;
+            unresolved_map[key] = {};
+            return key;
         }
 
-        void set_label(vm::Label* label) {
-            label->instruction_idx = instructions.size();
+        void resolve_to_instruction_idx(UnresolvedKey const& key) {
+            unresolved_map[key] = instructions.size();
         }
 
         bool operator==(Function const& rhs) const
