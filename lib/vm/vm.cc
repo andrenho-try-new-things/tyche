@@ -59,7 +59,7 @@ bool VM::step()
             if (!condition)
                 throw ExecutionException("Expected boolean");
             if (!*condition) {
-                loc_.pc = std::get<Label*>(next->instruction.operand1)->instruction_idx;
+                loc_.pc = std::get<int32_t>(next->instruction.operand1);
                 return false;
             }
             break;
