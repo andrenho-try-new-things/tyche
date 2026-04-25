@@ -20,22 +20,22 @@ bool VM::step()
         throw ExecutionException("Out of code area bounds");
     switch (next->instruction.operation) {
         case Operation::PushNil:
-            push_nil();
+            push_value(std::monostate());
             break;
         case Operation::PushInt:
-            push_integer(std::get<int32_t>(next->instruction.operand1));
+            push_value(std::get<int32_t>(next->instruction.operand1));
             break;
         case Operation::PushFunction:
             push_value(ValueFunction { .id = (size_t) std::get<int32_t>(next->instruction.operand1) });
             break;
         case Operation::Pop:
-            pop();
+            pop_value();
             break;
         case Operation::Return:
             exit_function();
             return function_.empty();
         case Operation::ReturnNil:
-            push_nil();
+            stack_.emplace_back(std::monostate());
             exit_function();
             return function_.empty();
         case Operation::SetLocal:
@@ -47,7 +47,7 @@ bool VM::step()
         case Operation::Call: {
             Value v = pop_value();
             if (auto* f = std::get_if<ValueFunction>(&v); f) {
-                enter_function(f->id, loc_.pc + next->size);
+                enter_function(f->id, loc_.pc + next->size, (size_t) std::get<int32_t>(next->instruction.operand1));
                 return false;
             } else {
                 throw ExecutionException("Expected function type.");
@@ -85,17 +85,17 @@ bool VM::step_debug()
 
 void VM::run()
 {
-    enter_function(0, 0);
+    enter_function(0, 0, 0);
     while (!step());
 }
 
 void VM::run_debug()
 {
-    enter_function(0, 0);
+    enter_function(0, 0, 0);
     while (!step_debug());
 }
 
-void VM::enter_function(FunctionId f_id, size_t return_pc)
+void VM::enter_function(FunctionId f_id, size_t return_pc, size_t n_pars)
 {
     Function f = {
         .id = f_id,
@@ -111,6 +111,30 @@ void VM::exit_function()
 {
     loc_ = function_.top().return_loc;
     function_.pop();
+}
+
+Value VM::pop_value()
+{
+    Value v = std::move(stack_.back());
+    stack_.pop_back();
+    return v;
+}
+
+void VM::push_value(Value const& val)
+{
+    stack_.emplace_back(val);
+}
+
+std::string VM::debug_stack() const
+{
+    if (stack_.empty()) {
+        return "empty";
+    } else {
+        std::string out;
+        for (auto const& item: stack_)
+            out += "[" + std::to_string(item) + "] ";
+        return out;
+    }
 }
 
 }

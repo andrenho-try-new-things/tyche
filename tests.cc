@@ -7,6 +7,7 @@
 #include "lib/vm/vm.hh"
 #include "lib/compiler/exceptions.hh"
 #include "lib/vm/exception.hh"
+#include "lib/vm/value.hh"
 
 TEST(Lexer, Lexer)
 {
@@ -43,18 +44,6 @@ TEST(Parser, Parser)
            } }
         }
     }));
-}
-
-TEST(BaseVM, StackOperations)
-{
-    using namespace vm;
-    vm::BaseVM vm;
-
-    ASSERT_TRUE(vm.stack().empty());
-
-    vm.push_integer(542);
-    ASSERT_EQ(vm.stack().size(), 1);
-    ASSERT_EQ(vm.stack().back(), Value(542));
 }
 
 constexpr int32_t ExpectCompilationError = 432840923;
@@ -151,7 +140,8 @@ TEST(VM, LocalVarsInFunctions)
 TEST(VM, FunctionParameters)
 {
     vm_test("return func(a) { return a; }(42);", 42);
-    // TODO - multiple functions
+    // TODO - local variable after parameter
+    // TODO - multiple parameter
     // TODO - creative use of variables
     // TODO - pass function as parameter
 }

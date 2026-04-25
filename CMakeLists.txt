@@ -59,8 +59,6 @@ FetchContent_MakeAvailable(googletest)
 #
 
 add_library(lib${PROJECT_NAME} STATIC
-        lib/vm/basevm.cc
-        lib/vm/basevm.hh
         lib/vm/bytecode.cc
         lib/vm/bytecode.hh
         lib/vm/instruction.hh
