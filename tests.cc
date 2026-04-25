@@ -140,10 +140,12 @@ TEST(VM, LocalVarsInFunctions)
 TEST(VM, FunctionParameters)
 {
     vm_test("return func(a) { return a; }(42);", 42);
-    // TODO - local variable after parameter
-    // TODO - multiple parameter
-    // TODO - creative use of variables
-    // TODO - pass function as parameter
+    vm_test("return func(a, b) { return a; }(42, 12);", 42);
+    vm_test("return func(a, b) { return b; }(42, 12);", 12);
+    vm_test("return func(a, b) { c := 91; return b; }(42, 12);", 12);
+    vm_test("return func(a, b) { c := 91; return c; }(42, 12);", 91);
+    vm_test("return func(a, b) { c := 91; { c := 33; } return c; }(42, 12);", 91);
+    vm_test("a := func(b) { return b(); }; return a(func() { return 32; });", 32);  // pass function as parameter
 }
 
 int main(int argc, char** argv)

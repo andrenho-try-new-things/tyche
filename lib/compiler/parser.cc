@@ -173,7 +173,6 @@ void Parser::function()
     // add parameters as local variables to parser
     for (auto const& parameter: parameters)
         add_local_variable(parameter);
-    current_function().n_local_vars += parameters.size();
     current_function().n_parameters = parameters.size();
 
     // add parameters as local variables to IR

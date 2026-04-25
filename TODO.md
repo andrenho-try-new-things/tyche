@@ -4,8 +4,8 @@
   - [x] Retrieve variables
 - [x] Functions
   - [x] Local function variables
-  - [ ] Function parameters
-  - [ ] Native functions_
+  - [x] Function parameters
+  - [ ] Recursion
 - [ ] Control flow
 - [ ] Basic types
   - [ ] Boolean
@@ -18,6 +18,7 @@
 - [ ] Tables + GC
   - [ ] Metamethods?
   - [ ] Arrays
+- [ ] Native functions
 - [ ] Error handling
 - [ ] Closures
 - [ ] Imports (linker)
