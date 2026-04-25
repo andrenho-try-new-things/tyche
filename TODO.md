@@ -5,8 +5,10 @@
 - [x] Functions
   - [x] Local function variables
   - [x] Function parameters
-  - [ ] Recursion
 - [ ] Control flow
+  - [ ] Conditional (if, else)
+  - [ ] Loops (for, while, do/while, break, continue)
+  - [ ] Recursion
 - [ ] Basic types
   - [ ] Boolean
   - [ ] Float
