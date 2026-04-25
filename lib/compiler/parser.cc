@@ -12,9 +12,17 @@
              |   IDENTIFIER ":=" <expr> ";"
              |   <EOF>
 
-<expr> ::= "func" "(" ")" "{" statements "}"
+<expr> ::= <expr> ["(" function_call_parameters ")"...]
+       |   "func" "(" function_parameters ")" "{" statements "}"
+       |   "true" | "false"
        |   INTEGER
        |   IDENTIFIER
+
+<function_parameter> ::= IDENTIFIER "," <function_parameter>
+                     |   IDENTIFIER
+
+<function_call_parameters> ::= <expr> "," <expr>
+                           |   <expr>
 
 */
 
@@ -113,6 +121,10 @@ void Parser::expr()
         add_op(Operation::PushInt, *o_int);
     else if (t.is_identifier("func"))
         function();
+    else if (t.is_identifier("true"))
+        add_op(Operation::PushTrue);
+    else if (t.is_identifier("false"))
+        add_op(Operation::PushFalse);
     else if (auto o_id = t.identifier(); o_id)   // any other identifier
         local_variable_retrieval(*o_id);
     else

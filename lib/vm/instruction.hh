@@ -6,7 +6,7 @@
 namespace vm {
 
 enum class Operation : uint8_t {
-    PushNil, PushInt, PushFunction, Pop,
+    PushNil, PushTrue, PushFalse, PushInt, PushFunction, Pop,
     Return, ReturnNil,
     GetLocal, SetLocal,
     Call
@@ -24,6 +24,8 @@ struct Instruction {
         switch (i.operation) {
             case Operation::PushNil:        os << "PUSHNIL"; break;
             case Operation::PushInt:        os << "PUSHINT " << std::get<int32_t>(i.operand1); break;
+            case Operation::PushTrue:       os << "PUSHTRUE"; break;
+            case Operation::PushFalse:      os << "PUSHFALSE"; break;
             case Operation::PushFunction:   os << "PUSHFUNC @" << std::get<int32_t>(i.operand1); break;
             case Operation::Pop:            os << "POP"; break;
             case Operation::Return:         os << "RET"; break;

@@ -22,6 +22,12 @@ bool VM::step()
         case Operation::PushNil:
             stack_push(std::monostate());
             break;
+        case Operation::PushTrue:
+            stack_push(true);
+            break;
+        case Operation::PushFalse:
+            stack_push(false);
+            break;
         case Operation::PushInt:
             stack_push(std::get<int32_t>(next->instruction.operand1));
             break;

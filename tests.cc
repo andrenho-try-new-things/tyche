@@ -148,6 +148,12 @@ TEST(VM, FunctionParameters)
     vm_test("a := func(b) { return b(); }; return a(func() { return 32; });", 32);  // pass function as parameter
 }
 
+TEST(VM, Boolean)
+{
+    vm_test("return true;", true);
+    vm_test("return false;", false);
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
