@@ -54,6 +54,7 @@ private:
     void                     local_variable_assignment(std::string const& identifier);
     void                     variable(std::string const& identifier);
     void                     expr();
+    void                     if_();
     void                     return_();
     void                     function();
     void                     function_call();

@@ -10,6 +10,7 @@
 
 <statement>  ::= "return" <expr> ";"
              |   IDENTIFIER ":=" <expr> ";"
+             |   "if" <expr> "{" <statements> "}"
              |   <EOF>
 
 <expr> ::= <expr> ["(" function_call_parameters ")"...]
@@ -161,6 +162,8 @@ bool Parser::statement()
 
     if (t.is_identifier("return"))
         return_();
+    else if (t.is_identifier("if"))
+        if_();
     else if (auto o_id = t.identifier(); o_id)  // any other identifier
         variable(*o_id);
     else if (t.is_eof())
@@ -169,6 +172,15 @@ bool Parser::statement()
         throw CompilationError("Invalid statement", t.line, t.column);
 
     return false;
+}
+
+void Parser::if_()
+{
+    expr();
+    // TODO - add_op(Operation::BranchFalse, 0);
+    expect_symbol("{");
+    statements(1);       // scope level is 1 because we already ingested the "{"
+    // TODO - add_label();
 }
 
 void Parser::function()

@@ -9,7 +9,8 @@ enum class Operation : uint8_t {
     PushNil, PushTrue, PushFalse, PushInt, PushFunction, Pop,
     Return, ReturnNil,
     GetLocal, SetLocal,
-    Call
+    Call,
+    BranchFalse,
 };
 
 using Operand = std::variant<std::monostate, int32_t>;

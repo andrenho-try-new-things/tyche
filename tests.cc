@@ -154,6 +154,11 @@ TEST(VM, Boolean)
     vm_test("return false;", false);
 }
 
+TEST(VM, FlowConditional)
+{
+    vm_test("if true { return 1; } return 2;", 1);
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
