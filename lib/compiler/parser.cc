@@ -10,12 +10,13 @@
 
 <statement>  ::= "return" <expr> ";"
              |   IDENTIFIER ":=" <expr> ";"
-             |   "if" <expr> "{" <statements> "}"
+             |   "if" <expr> "{" <statements> "}" ["elseif" <expr> "{" <statements> "}"...] ["else" "{" <statements> "}"]
              |   <EOF>
 
 <expr> ::= <expr> ["(" function_call_parameters ")"...]
        |   "func" "(" function_parameters ")" "{" statements "}"
        |   "true" | "false"
+       |   <expr> "?" <expr> ":" <expr>
        |   INTEGER
        |   IDENTIFIER
 
@@ -131,6 +132,9 @@ void Parser::expr()
     else
         throw CompilationError("Invalid expression", t.line, t.column);
 
+    if (peek_symbol("?"))
+        ternary_expr();
+
     while (peek_symbol("(")) {
         function_call();
     }
@@ -213,6 +217,25 @@ void Parser::if_()
 
     ir_resolve_to_instruction_idx(skip_to_end);
 }
+
+void Parser::ternary_expr()
+{
+    expect_symbol("?");
+
+    auto skip_to_false = ir_create_unknown_key();
+    auto skip_to_end = ir_create_unknown_key();
+
+    ir_add_op(Operation::BranchFalse, skip_to_false);
+    expr();
+    ir_add_op(Operation::Jump, skip_to_end);
+
+    expect_symbol(":");
+
+    ir_resolve_to_instruction_idx(skip_to_false);
+    expr();
+    ir_resolve_to_instruction_idx(skip_to_end);
+}
+
 
 void Parser::function()
 {

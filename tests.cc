@@ -166,6 +166,12 @@ TEST(VM, FlowConditional)
     vm_test("if false { return 1; } elseif false { return 2; } elseif false { return 3; } else { return 4; } return 5;", 4);
 }
 
+TEST(VM, TernaryExpression)
+{
+    vm_test("return true ? 1 : 2;", 1);
+    vm_test("return false ? 1 : 2;", 2);
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
