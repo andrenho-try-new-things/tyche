@@ -176,28 +176,42 @@ bool Parser::statement()
 
 void Parser::if_()
 {
+    auto skip_to_end = ir_create_unknown_key();
+
     // if
     expr();
-    auto if_label = ir_create_unknown_key();
-    ir_add_op(Operation::BranchFalse, if_label);
+    auto skip_to_next = ir_create_unknown_key();
+    ir_add_op(Operation::BranchFalse, skip_to_next);
     expect_symbol("{");
     push_scope();
     statements(1);
+    if (peek_identifier("else") || peek_identifier("elseif"))
+        ir_add_op(Operation::Jump, skip_to_end);
 
-    if (!peek_identifier("else")) {
-        ir_resolve_to_instruction_idx(if_label);
-
-    } else {
-        // else
+    // elseif
+    while (peek_identifier("elseif")) {
         ingest_token();
-        auto else_label = ir_create_unknown_key();
-        ir_add_op(Operation::Jump, else_label);
-        ir_resolve_to_instruction_idx(if_label);
+        ir_resolve_to_instruction_idx(skip_to_next);
+        skip_to_next = ir_create_unknown_key();
+        expr();
+        ir_add_op(Operation::BranchFalse, skip_to_next);
         expect_symbol("{");
         push_scope();
         statements(1);
-        ir_resolve_to_instruction_idx(else_label);
+        ir_add_op(Operation::Jump, skip_to_end);
     }
+
+    ir_resolve_to_instruction_idx(skip_to_next);
+
+    // else
+    if (peek_identifier("else")) {
+        ingest_token();
+        expect_symbol("{");
+        push_scope();
+        statements(1);
+    }
+
+    ir_resolve_to_instruction_idx(skip_to_end);
 }
 
 void Parser::function()

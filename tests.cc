@@ -160,6 +160,10 @@ TEST(VM, FlowConditional)
     vm_test("if false { return 1; } return 2;", 2);
     vm_test("if true { return 1; } else { return 2; } return 3;", 1);
     vm_test("if false { return 1; } else { return 2; } return 3;", 2);
+    vm_test("if true { return 1; } elseif true { return 2; } elseif true { return 3; } else { return 4; } return 5;", 1);
+    vm_test("if false { return 1; } elseif true { return 2; } elseif true { return 3; } else { return 4; } return 5;", 2);
+    vm_test("if false { return 1; } elseif false { return 2; } elseif true { return 3; } else { return 4; } return 5;", 3);
+    vm_test("if false { return 1; } elseif false { return 2; } elseif false { return 3; } else { return 4; } return 5;", 4);
 }
 
 int main(int argc, char** argv)
