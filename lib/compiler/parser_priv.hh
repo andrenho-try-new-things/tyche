@@ -54,6 +54,8 @@ private:
     void                     local_variable_assignment(std::string const& identifier);
     void                     variable(std::string const& identifier);
     void                     expr();
+    void                     ternary_expr();
+    void                     if_();
     void                     return_();
     void                     function();
     void                     function_call();
@@ -68,6 +70,7 @@ private:
     // token management
     [[nodiscard]] Token peek_token() const;
     [[nodiscard]] bool peek_symbol(std::string const& symbol) const;
+    [[nodiscard]] bool peek_identifier(std::string const& symbol) const;
     Token ingest_token();
     void expect_symbol(std::string const& symbol);
 
@@ -78,8 +81,11 @@ private:
     [[nodiscard]] Function const& current_function() const { return functions_.at(current_function_id()); }
     [[nodiscard]] size_t current_function_id() const { return function_id_stack_.top(); }
 
-    template <typename... Args> void add_op(Args... args);
-    void add_op(vm::Operation operation, size_t arg) { add_op(operation, (int32_t) arg); }
+    // IR management
+    template <typename... Args> void ir_add_op(Args... args);
+    void          ir_add_op(vm::Operation operation, size_t arg) { ir_add_op(operation, (int32_t) arg); }
+    UnresolvedKey ir_create_unknown_key() { return ir_.functions.at(current_function_id()).create_unresolved(); }
+    void          ir_resolve_to_instruction_idx(UnresolvedKey const& key) { ir_.functions.at(current_function_id()).resolve_to_instruction_idx(key); }
 };
 
 }

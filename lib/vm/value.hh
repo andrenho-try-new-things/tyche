@@ -15,7 +15,7 @@ struct ValueFunction {
     bool operator==(ValueFunction const& rhs) const { return id==rhs.id; }
 };
 
-using Value = std::variant<Nil, int32_t, ValueFunction>;
+using Value = std::variant<Nil, int32_t, bool, ValueFunction>;
 
 }
 

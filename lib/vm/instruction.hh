@@ -2,17 +2,19 @@
 #define TYCHE_INSTRUCTION_HH
 
 #include <ostream>
+#include "unresolved.hh"
 
 namespace vm {
 
 enum class Operation : uint8_t {
-    PushNil, PushInt, PushFunction, Pop,
+    PushNil, PushTrue, PushFalse, PushInt, PushFunction, Pop,
     Return, ReturnNil,
     GetLocal, SetLocal,
-    Call
+    Call,
+    Jump, BranchFalse,
 };
 
-using Operand = std::variant<std::monostate, int32_t>;
+using Operand = std::variant<std::monostate, int32_t, compiler::UnresolvedKey>;
 
 struct Instruction {
     Operation operation;
@@ -24,6 +26,8 @@ struct Instruction {
         switch (i.operation) {
             case Operation::PushNil:        os << "PUSHNIL"; break;
             case Operation::PushInt:        os << "PUSHINT " << std::get<int32_t>(i.operand1); break;
+            case Operation::PushTrue:       os << "PUSHTRUE"; break;
+            case Operation::PushFalse:      os << "PUSHFALSE"; break;
             case Operation::PushFunction:   os << "PUSHFUNC @" << std::get<int32_t>(i.operand1); break;
             case Operation::Pop:            os << "POP"; break;
             case Operation::Return:         os << "RET"; break;
@@ -31,6 +35,8 @@ struct Instruction {
             case Operation::SetLocal:       os << "SETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::GetLocal:       os << "GETLOCAL " << std::get<int32_t>(i.operand1); break;
             case Operation::Call:           os << "CALL " << std::get<int32_t>(i.operand1); break;
+            case Operation::Jump:           os << "JUMP &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
+            case Operation::BranchFalse:    os << "BRANCH_F &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
             default:                        os << "???"; break;
         }
         return os;

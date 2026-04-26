@@ -22,6 +22,12 @@ bool VM::step()
         case Operation::PushNil:
             stack_push(std::monostate());
             break;
+        case Operation::PushTrue:
+            stack_push(true);
+            break;
+        case Operation::PushFalse:
+            stack_push(false);
+            break;
         case Operation::PushInt:
             stack_push(std::get<int32_t>(next->instruction.operand1));
             break;
@@ -47,6 +53,20 @@ bool VM::step()
         case Operation::Call:
             function_call((size_t) std::get<int32_t>(next->instruction.operand1), next->size);
             return false;
+        case Operation::Jump:
+            loc_.pc = std::get<int32_t>(next->instruction.operand1);
+            return false;
+        case Operation::BranchFalse: {
+            Value v = stack_pop();
+            auto* condition = std::get_if<bool>(&v);
+            if (!condition)
+                throw ExecutionException("Expected boolean");
+            if (!*condition) {
+                loc_.pc = std::get<int32_t>(next->instruction.operand1);
+                return false;
+            }
+            break;
+        }
         default:
             throw ExecutionException("Invalid opcode");
     }

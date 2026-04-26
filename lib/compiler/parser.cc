@@ -10,11 +10,21 @@
 
 <statement>  ::= "return" <expr> ";"
              |   IDENTIFIER ":=" <expr> ";"
+             |   "if" <expr> "{" <statements> "}" ["elseif" <expr> "{" <statements> "}"...] ["else" "{" <statements> "}"]
              |   <EOF>
 
-<expr> ::= "func" "(" ")" "{" statements "}"
+<expr> ::= <expr> ["(" function_call_parameters ")"...]
+       |   "func" "(" function_parameters ")" "{" statements "}"
+       |   "true" | "false"
+       |   <expr> "?" <expr> ":" <expr>
        |   INTEGER
        |   IDENTIFIER
+
+<function_parameter> ::= IDENTIFIER "," <function_parameter>
+                     |   IDENTIFIER
+
+<function_call_parameters> ::= <expr> "," <expr>
+                           |   <expr>
 
 */
 
@@ -65,13 +75,13 @@ void Parser::return_()
 {
     expr();
     expect_symbol(";");
-    add_op(Operation::Return);
+    ir_add_op(Operation::Return);
 }
 
 void Parser::local_variable_retrieval(std::string const& identifier)
 {
     if (auto o_idx = find_local_variable(identifier); o_idx)
-        add_op(Operation::GetLocal, *o_idx);
+        ir_add_op(Operation::GetLocal, *o_idx);
     else
         throw CompilationError("Could not find local variable '" + identifier + "'", latest_token_.line, latest_token_.column);
 }
@@ -81,7 +91,7 @@ void Parser::local_variable_declaration(std::string const& identifier)
     expr();
     expect_symbol(";");
     add_local_variable(identifier);
-    add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id()).add_variable(identifier));
+    ir_add_op(Operation::SetLocal, (int32_t) ir_.functions.at(current_function_id()).add_variable(identifier));
 }
 
 void Parser::local_variable_assignment(std::string const& identifier)
@@ -90,7 +100,7 @@ void Parser::local_variable_assignment(std::string const& identifier)
     expect_symbol(";");
 
     if (auto o_idx = find_local_variable(identifier); o_idx)
-        add_op(Operation::SetLocal, *o_idx);
+        ir_add_op(Operation::SetLocal, *o_idx);
     else
         throw CompilationError("Could not find local variable '" + identifier + "'", latest_token_.line, latest_token_.column);
 }
@@ -110,13 +120,20 @@ void Parser::expr()
 {
     Token t = ingest_token();
     if (auto o_int = t.integer(); o_int)
-        add_op(Operation::PushInt, *o_int);
+        ir_add_op(Operation::PushInt, *o_int);
     else if (t.is_identifier("func"))
         function();
+    else if (t.is_identifier("true"))
+        ir_add_op(Operation::PushTrue);
+    else if (t.is_identifier("false"))
+        ir_add_op(Operation::PushFalse);
     else if (auto o_id = t.identifier(); o_id)   // any other identifier
         local_variable_retrieval(*o_id);
     else
         throw CompilationError("Invalid expression", t.line, t.column);
+
+    if (peek_symbol("?"))
+        ternary_expr();
 
     while (peek_symbol("(")) {
         function_call();
@@ -140,7 +157,7 @@ void Parser::function_call()
     }
 
     expect_symbol(")");
-    add_op(Operation::Call, n_pars);
+    ir_add_op(Operation::Call, n_pars);
 }
 
 bool Parser::statement()
@@ -149,6 +166,8 @@ bool Parser::statement()
 
     if (t.is_identifier("return"))
         return_();
+    else if (t.is_identifier("if"))
+        if_();
     else if (auto o_id = t.identifier(); o_id)  // any other identifier
         variable(*o_id);
     else if (t.is_eof())
@@ -158,6 +177,65 @@ bool Parser::statement()
 
     return false;
 }
+
+void Parser::if_()
+{
+    auto skip_to_end = ir_create_unknown_key();
+
+    // if
+    expr();
+    auto skip_to_next = ir_create_unknown_key();
+    ir_add_op(Operation::BranchFalse, skip_to_next);
+    expect_symbol("{");
+    push_scope();
+    statements(1);
+    if (peek_identifier("else") || peek_identifier("elseif"))
+        ir_add_op(Operation::Jump, skip_to_end);
+
+    // elseif
+    while (peek_identifier("elseif")) {
+        ingest_token();
+        ir_resolve_to_instruction_idx(skip_to_next);
+        skip_to_next = ir_create_unknown_key();
+        expr();
+        ir_add_op(Operation::BranchFalse, skip_to_next);
+        expect_symbol("{");
+        push_scope();
+        statements(1);
+        ir_add_op(Operation::Jump, skip_to_end);
+    }
+
+    ir_resolve_to_instruction_idx(skip_to_next);
+
+    // else
+    if (peek_identifier("else")) {
+        ingest_token();
+        expect_symbol("{");
+        push_scope();
+        statements(1);
+    }
+
+    ir_resolve_to_instruction_idx(skip_to_end);
+}
+
+void Parser::ternary_expr()
+{
+    expect_symbol("?");
+
+    auto skip_to_false = ir_create_unknown_key();
+    auto skip_to_end = ir_create_unknown_key();
+
+    ir_add_op(Operation::BranchFalse, skip_to_false);
+    expr();
+    ir_add_op(Operation::Jump, skip_to_end);
+
+    expect_symbol(":");
+
+    ir_resolve_to_instruction_idx(skip_to_false);
+    expr();
+    ir_resolve_to_instruction_idx(skip_to_end);
+}
+
 
 void Parser::function()
 {
@@ -184,7 +262,7 @@ void Parser::function()
     expect_symbol("{");
     statements(1);       // scope level is 1 because we already ingested the "{"
     end_function();
-    add_op(Operation::PushFunction, function_id);
+    ir_add_op(Operation::PushFunction, function_id);
 }
 
 std::vector<std::string> Parser::function_parameters()
@@ -216,9 +294,9 @@ std::vector<std::string> Parser::function_parameters()
 //
 
 template <typename... Args>
-void Parser::add_op(Args... args)
+void Parser::ir_add_op(Args... args)
 {
-    ir_.functions.at(current_function_id()).instructions.emplace_back(args...);
+    ir_.functions.at(current_function_id()).add_instruction(args...);
 }
 
 void Parser::add_local_variable(std::string const& identifier)
@@ -268,7 +346,7 @@ size_t Parser::start_function()
 
 void Parser::end_function()
 {
-    add_op(Operation::ReturnNil);
+    ir_add_op(Operation::ReturnNil);
     function_id_stack_.pop();
 }
 
@@ -293,6 +371,11 @@ Token Parser::ingest_token()
 bool Parser::peek_symbol(std::string const& symbol) const
 {
     return peek_token().is_symbol(symbol);
+}
+
+bool Parser::peek_identifier(const std::string& symbol) const
+{
+    return peek_token().is_identifier(symbol);
 }
 
 void Parser::expect_symbol(std::string const& symbol)

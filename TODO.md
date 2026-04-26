@@ -6,11 +6,12 @@
   - [x] Local function variables
   - [x] Function parameters
 - [ ] Control flow
-  - [ ] Conditional (if, else)
+  - [x] Boolean
+  - [x] Conditional (if, else)
+  - [ ] Ternary expression
   - [ ] Loops (for, while, do/while, break, continue)
   - [ ] Recursion
 - [ ] Basic types
-  - [ ] Boolean
   - [ ] Float
   - [ ] String
 - [ ] Arithmetic operations
@@ -20,8 +21,8 @@
 - [ ] Tables + GC
   - [ ] Metamethods?
   - [ ] Arrays
-- [ ] Native functions
 - [ ] Error handling
+- [ ] Native functions
 - [ ] Closures
 - [ ] Imports (linker)
 - [ ] Standard library

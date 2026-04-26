@@ -20,6 +20,14 @@ public:
     const size_t column;
 };
 
+class LinkerError : public std::runtime_error {
+public:
+    explicit LinkerError(const char* description)
+            : std::runtime_error(std::format("Linker error: {}", description)) {}
+
+    explicit LinkerError(std::string const& description) : LinkerError(description.c_str()) {}
+};
+
 }
 
 

@@ -7,12 +7,13 @@
 
 #include "../vm/instruction.hh"
 
+#include <list>
+
 namespace compiler {
 
 struct IR {
     struct Variable {
         std::string name;
-
         bool operator==(Variable const& var) const = default;
     };
 
@@ -20,10 +21,27 @@ struct IR {
         std::vector<vm::Instruction> instructions {};
         std::vector<Variable>        local_vars {};
         size_t                       n_parameters = 0;
+        UnresolvedMap                unresolved_map;
 
         size_t add_variable(std::string const& var_name) {
             local_vars.push_back({ var_name });
             return local_vars.size() - 1;
+        }
+
+        template <typename... Args>
+        size_t add_instruction(Args... args) {
+            instructions.emplace_back(args...);
+            return instructions.size() - 1;
+        }
+
+        UnresolvedKey create_unresolved() {
+            UnresolvedKey key;
+            unresolved_map[key] = {};
+            return key;
+        }
+
+        void resolve_to_instruction_idx(UnresolvedKey const& key) {
+            unresolved_map[key] = instructions.size();
         }
 
         bool operator==(Function const& rhs) const
