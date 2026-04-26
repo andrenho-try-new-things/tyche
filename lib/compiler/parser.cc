@@ -153,6 +153,15 @@ void Parser::expr(int min_bp)
             local_variable_retrieval(*o_id);
         else
             throw CompilationError("Unexpected token in expression", latest_token_.line, latest_token_.column);
+
+        // ternary expressions (TODO)
+        if (peek_symbol("?"))
+            ternary_expr();
+
+        // function calls (TODO)
+        while (peek_symbol("(")) {
+            function_call();
+        }
     }
 
     // infix
@@ -174,14 +183,6 @@ void Parser::expr(int min_bp)
             ir_add_op(Operation::Multiplication);
     }
 
-    // ternary expressions (TODO)
-    if (peek_symbol("?"))
-        ternary_expr();
-
-    // function calls (TODO)
-    while (peek_symbol("(")) {
-        function_call();
-    }
 }
 
 void Parser::function_call()
