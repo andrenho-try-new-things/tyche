@@ -53,7 +53,7 @@ private:
     void                     local_variable_declaration(std::string const& identifier);
     void                     local_variable_assignment(std::string const& identifier);
     void                     variable(std::string const& identifier);
-    void                     expr();
+    void                     expr(int min_bp=0);
     void                     ternary_expr();
     void                     if_();
     void                     return_();

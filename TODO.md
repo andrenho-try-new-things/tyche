@@ -27,3 +27,8 @@
 - [ ] Imports (linker)
 - [ ] Standard library
 
+Expression operator precedence:
+
+.
+++, --
+INTEGER, IDENTIFIER, true, false

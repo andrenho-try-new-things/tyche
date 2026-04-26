@@ -172,6 +172,18 @@ TEST(VM, TernaryExpression)
     vm_test("return false ? 1 : 2;", 2);
 }
 
+TEST(VM, SimplePrecedenceExpressions)
+{
+    vm_test("return 4;", 4);
+    vm_test("return 1 + 2;", 3);
+    vm_test("return 1 + 2 + 3;", 6);
+    vm_test("return 1 * 2 + 3;", 5);
+    vm_test("return 1 + 2 * 3;", 7);
+    vm_test("return (1 + 2) * 3;", 9);
+    vm_test("return 1 + (2 * 3);", 7);
+    vm_test("return ((1 + 2) * 3);", 9);
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
