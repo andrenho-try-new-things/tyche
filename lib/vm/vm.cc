@@ -67,6 +67,12 @@ bool VM::step()
             }
             break;
         }
+        case Operation::Sum:
+            stack_push(std::get<int32_t>(stack_pop()) + std::get<int32_t>(stack_pop()));  // TODO - operations for different object types
+            break;
+        case Operation::Multiplication:
+            stack_push(std::get<int32_t>(stack_pop()) * std::get<int32_t>(stack_pop()));  // TODO - operations for different object types
+            break;
         default:
             throw ExecutionException("Invalid opcode");
     }

@@ -116,25 +116,69 @@ void Parser::variable(std::string const& identifier)
         throw CompilationError("Expected ':=' or '='", t.line, t.column);
 }
 
-void Parser::expr()
+void Parser::expr(int min_bp)
 {
-    Token t = ingest_token();
-    if (auto o_int = t.integer(); o_int)
-        ir_add_op(Operation::PushInt, *o_int);
-    else if (t.is_identifier("func"))
-        function();
-    else if (t.is_identifier("true"))
-        ir_add_op(Operation::PushTrue);
-    else if (t.is_identifier("false"))
-        ir_add_op(Operation::PushFalse);
-    else if (auto o_id = t.identifier(); o_id)   // any other identifier
-        local_variable_retrieval(*o_id);
-    else
-        throw CompilationError("Invalid expression", t.line, t.column);
+    // supporting functions
 
+    struct BindingPower { int left; int right; };
+    auto infix_bp = [](Token const& t) -> BindingPower {
+        if (t.is_symbol("+"))
+            return { 10, 11 };
+        if (t.is_symbol("*"))
+            return { 20, 21 };
+        return { 0, 0 };
+    };
+
+    auto prefix_bp = [](Token const& t) -> int {
+        return 0;
+    };
+
+    Token t = ingest_token();
+
+    // prefix
+
+    if (t.is_symbol("(")) {   // parenthesis
+        expr(min_bp);
+        expect_symbol(")");
+    } else {                  // numbers or identifiers
+        if (auto o_int = t.integer(); o_int)
+            ir_add_op(Operation::PushInt, *o_int);
+        else if (t.is_identifier("func"))
+            function();
+        else if (t.is_identifier("true"))
+            ir_add_op(Operation::PushTrue);
+        else if (t.is_identifier("false"))
+            ir_add_op(Operation::PushFalse);
+        else if (auto o_id = t.identifier(); o_id)   // any other identifier
+            local_variable_retrieval(*o_id);
+        else
+            throw CompilationError("Unexpected token in expression", latest_token_.line, latest_token_.column);
+    }
+
+    // infix
+
+    for (;;) {
+        Token tt = peek_token();
+        BindingPower bp = infix_bp(tt);
+
+        if (bp.left == 0 || bp.left < min_bp)
+            break;
+
+        ingest_token();
+        expr(bp.right);
+
+        // parse expression
+        if (tt.is_symbol("+"))
+            ir_add_op(Operation::Sum);
+        else if (tt.is_symbol("*"))
+            ir_add_op(Operation::Multiplication);
+    }
+
+    // ternary expressions (TODO)
     if (peek_symbol("?"))
         ternary_expr();
 
+    // function calls (TODO)
     while (peek_symbol("(")) {
         function_call();
     }

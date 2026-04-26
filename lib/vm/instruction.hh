@@ -12,6 +12,7 @@ enum class Operation : uint8_t {
     GetLocal, SetLocal,
     Call,
     Jump, BranchFalse,
+    Sum, Multiplication,
 };
 
 using Operand = std::variant<std::monostate, int32_t, compiler::UnresolvedKey>;
@@ -37,6 +38,8 @@ struct Instruction {
             case Operation::Call:           os << "CALL " << std::get<int32_t>(i.operand1); break;
             case Operation::Jump:           os << "JUMP &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
             case Operation::BranchFalse:    os << "BRANCH_F &" << std::format("{:03x}", (size_t) std::get<int32_t>(i.operand1)); break;
+            case Operation::Sum:            os << "SUM"; break;
+            case Operation::Multiplication: os << "MUL"; break;
             default:                        os << "???"; break;
         }
         return os;
